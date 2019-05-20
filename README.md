@@ -1,0 +1,2 @@
+# copystrike
+Senior Design Project
