@@ -1,0 +1,695 @@
+import tkinter as tk, threading
+from tkinter import *
+import tkinter.font
+from tkinter import filedialog
+from tkinter.font import *
+import imageio
+from imageio import *
+from PIL import *
+import cv2
+from cv2 import *
+import PIL
+from PIL import Image, ImageTk
+from PIL import *
+import os, sys
+import time
+from time import *
+import  json
+from json import *
+import requests
+from requests import *
+import moviepy
+from moviepy import *
+import moviepy.editor
+from moviepy.editor import VideoFileClip
+import matplotlib
+from matplotlib import *
+# import matplotlib.pyplot
+# from matplotlib.pyplot import *
+import math
+from math import *
+import numpy
+from numpy import *
+
+
+mainFile = None
+fileName = None
+directory = None
+frames = None
+video = None
+video2 = None
+width = None #the width of the video
+
+class Application(tk.Frame):
+    def __init__(self, master=None):
+        super().__init__(master)
+        self.master = master
+        master.title("Bowling Analysis")
+        master.resizable(False, False)
+
+        self.pack()
+        self.create_widgets()
+
+    def create_widgets(self):
+        self.categoryFont = Font(family="Times New Roman", size=14, underline=True)
+        self.normalFont = Font(family="Times New Roman", size=12, underline=False)
+        self.buttonFont = Font(family="Times New Roman", size=16, underline=False)
+
+        self.labelInfo = Label(root, text="Please Enter Information:", font=self.categoryFont)
+        self.labelInfo.pack()
+        self.labelInfo.place(x=20, y=10, anchor=NW)
+
+        self.labelName = Label(root, text="Name:", font=self.normalFont)
+        self.labelName.pack()
+        self.labelName.place(x=20, y=40, anchor=NW)
+
+        self.labelGender = Label(root, text="Gender:", font=self.normalFont)
+        self.labelGender.pack()
+        self.labelGender.place(x=20, y=70, anchor=NW)
+
+        self.labelAge = Label(root, text="Age:", font=self.normalFont)
+        self.labelAge.pack()
+        self.labelAge.place(x=20, y=100, anchor=NW)
+
+        self.labelHeight = Label(root, text="Height:", font=self.normalFont)
+        self.labelHeight.pack()
+        self.labelHeight.place(x=20, y=130, anchor=NW)
+
+        self.boxName = Text(root, height=1, width=14)
+        self.boxName.pack()
+        self.boxName.place(x=95, y=43, anchor=NW)
+
+        genderChoices = ["Male", "Female"]
+        genderMF = StringVar(root)
+        genderMF.set("Male")
+        self.boxGender = OptionMenu(root, genderMF, *genderChoices)
+        self.boxGender.config(width=12)
+        self.boxGender.pack()
+        self.boxGender.place(x=95, y=68, anchor=NW)
+
+        self.boxAge = Text(root, height=1, width=14)
+        self.boxAge.pack()
+        self.boxAge.place(x=95, y=103, anchor=NW)
+
+        self.labelFeet = Label(root, text="FT:", font=self.normalFont)
+        self.labelFeet.pack()
+        self.labelFeet.place(x=95, y=130, anchor=NW)
+
+        self.labelInches = Label(root, text="IN:", font=self.normalFont)
+        self.labelInches.pack()
+        self.labelInches.place(x=160, y=130, anchor=NW)
+
+        self.boxFeet = Text(root, height=1, width=2)
+        self.boxFeet.pack()
+        self.boxFeet.place(x=125, y=133, anchor=NW)
+
+        self.boxInches = Text(root, height=1, width=2)
+        self.boxInches.pack()
+        self.boxInches.place(x=190, y=133, anchor=NW)
+
+        self.startButton = Button(root, height=2, width=15, text='Start', font=self.buttonFont, command=playVideo)
+        self.startButton.pack()
+        self.startButton.place(x=20, y=200)
+
+        self.restartButton = Button(root, height=2, width=15, text='Restart', font=self.buttonFont,
+                                    command=restartVideo)
+        self.restartButton.pack()
+        self.restartButton.place(x=225, y=200)
+
+        self.fileButton = Button(root, height=1, width=4, text='File:', font=self.normalFont, command=selectFile)
+        self.fileButton.pack()
+        self.fileButton.place(x=230, y=36, anchor=NW)
+
+        self.fileBox = Text(root, height=1, width=14)
+        self.fileBox.pack()
+        self.fileBox.place(x=305, y=43, anchor=NW)
+
+        self.labelFrames = Label(root, text="Frames:", font=self.normalFont)
+        self.labelFrames.pack()
+        self.labelFrames.place(x=230, y=70, anchor=NW)
+
+        self.framesBox = Text(root, height=1, width=14)
+        self.framesBox.pack()
+        self.framesBox.place(x=305, y=73, anchor=NW)
+
+        self.labelPerceived = Label(root, text="Perceived Values:", font=self.categoryFont)
+        self.labelPerceived.pack()
+        self.labelPerceived.place(x=500, y=10, anchor=NW)
+
+        self.labelRknee = Label(root, text="Right Leg Angle at Release:", font=self.normalFont)
+        self.labelRknee.pack()
+        self.labelRknee.place(x=500, y=40, anchor=NW)
+
+        self.answerRknee = Label(root, text="", font=self.normalFont)
+        self.answerRknee.pack()
+        self.answerRknee.place(x=725, y=40, anchor=NE)
+
+        self.labelRelbow = Label(root, text="Right Arm Angle at Release:", font=self.normalFont)
+        self.labelRelbow.pack()
+        self.labelRelbow.place(x=500, y=70, anchor=NW)
+
+        self.answerRelbow = Label(root, text="", font=self.normalFont)
+        self.answerRelbow.pack()
+        self.answerRelbow.place(x=725, y=70, anchor=NE)
+
+        self.labelLknee = Label(root, text="Left Leg Angle at Release:", font=self.normalFont)
+        self.labelLknee.pack()
+        self.labelLknee.place(x=500, y=100, anchor=NW)
+
+        self.answerLknee = Label(root, text="", font=self.normalFont)
+        self.answerLknee.pack()
+        self.answerLknee.place(x=725, y=100, anchor=NE)
+
+        self.labelLelbow = Label(root, text="Left Arm Angle at Release:", font=self.normalFont)
+        self.labelLelbow.pack()
+        self.labelLelbow.place(x=500, y=130, anchor=NW)
+
+        self.answerLelbow = Label(root, text="", font=self.normalFont)
+        self.answerLelbow.pack()
+        self.answerLelbow.place(x=725, y=130, anchor=NE)
+
+        self.labelBack = Label(root, text="Back Angle at Release:", font=self.normalFont)
+        self.labelBack.pack()
+        self.labelBack.place(x=500, y=160, anchor=NW)
+
+        self.answerBack = Label(root, text="", font=self.normalFont)
+        self.answerBack.pack()
+        self.answerBack.place(x=725, y=160, anchor=NE)
+
+
+        self.labelRkneeLS = Label(root, text="Right Leg Angle at Last Step:", font=self.normalFont)
+        self.labelRkneeLS.pack()
+        self.labelRkneeLS.place(x=750, y=40, anchor=NW)
+
+        self.answerRkneeLS = Label(root, text="", font=self.normalFont)
+        self.answerRkneeLS.pack()
+        self.answerRkneeLS.place(x=1000, y=40, anchor=NE)
+
+        self.labelRelbowLS = Label(root, text="Right Arm Angle at Last Step:", font=self.normalFont)
+        self.labelRelbowLS.pack()
+        self.labelRelbowLS.place(x=750, y=70, anchor=NW)
+
+        self.answerRelbowLS = Label(root, text="", font=self.normalFont)
+        self.answerRelbowLS.pack()
+        self.answerRelbowLS.place(x=1000, y=70, anchor=NE)
+
+        self.labelLkneeLS = Label(root, text="Left Leg Angle at Last Step:", font=self.normalFont)
+        self.labelLkneeLS.pack()
+        self.labelLkneeLS.place(x=750, y=100, anchor=NW)
+
+        self.answerLkneeLS = Label(root, text="", font=self.normalFont)
+        self.answerLkneeLS.pack()
+        self.answerLkneeLS.place(x=1000, y=100, anchor=NE)
+
+        self.labelLelbowLS = Label(root, text="Left Arm Angle at Last Step", font=self.normalFont)
+        self.labelLelbowLS.pack()
+        self.labelLelbowLS.place(x=750, y=130, anchor=NW)
+
+        self.answerLelbowLS = Label(root, text="", font=self.normalFont)
+        self.answerLelbowLS.pack()
+        self.answerLelbowLS.place(x=1000, y=130, anchor=NE)
+
+        self.labelBackLS = Label(root, text="Back Angle at Last Step:", font=self.normalFont)
+        self.labelBackLS.pack()
+        self.labelBackLS.place(x=750, y=160, anchor=NW)
+
+        self.answerBackLS = Label(root, text="", font=self.normalFont)
+        self.answerBackLS.pack()
+        self.answerBackLS.place(x=1000, y=160, anchor=NE)
+
+def cosineLaw(a,mid,c):
+
+    # (mid^2) = (a^2)+(c^2)-(2*a*c)*cos(midAngle)
+    midAngle = acos(((mid**2)-(a**2)-(c**2))/(-2*a*c))
+    midAngle = midAngle * 180 / math.pi
+    return midAngle
+
+def pythag(x1,x2,y1,y2):
+    distance = sqrt(pow((x1-x2),2)+pow((y1-y2),2))
+    return distance
+
+def pythagAngle(x1,x2,y1,y2):
+
+    angle  = tan(abs(y1-y2)/abs(x1-x2))
+    angle = angle * 180 / math.pi
+    return angle
+
+def checkPerson(jsonData):
+
+    personNum = None
+    peopleArray = None
+    roughX = None
+    middle = width/2
+
+    if len(jsonData["people"]) == 1:
+        personNum = 0
+    else:
+        for i in jsonData["people"]:
+            if jsonData["people"][i]["pose_keypoints_2d"][36] > 0:
+                roughX = jsonData["people"][i]["pose_keypoints_2d"][36]
+            elif jsonData["people"][i]["pose_keypoints_2d"][3] > 0:
+                roughX = jsonData["people"][i]["pose_keypoints_2d"][3]
+            elif jsonData["people"][i]["pose_keypoints_2d"][6] > 0:
+                roughX = jsonData["people"][i]["pose_keypoints_2d"][6]
+            peopleArray[i] = abs(roughX - middle)
+        personNum = numpy.argmin(peopleArray)
+
+    return personNum
+
+def trackingAlgo(jsonNew,jsonOld):
+    #jsonNew["people"][0]["pose_keypoints_2d"][0]
+    try:
+        #Legs
+        rr = pythag(jsonNew["people"][0]["pose_keypoints_2d"][30],jsonOld["people"][0]["pose_keypoints_2d"][30],jsonNew["people"][0]["pose_keypoints_2d"][31],jsonOld["people"][0]["pose_keypoints_2d"][31])
+        rl = pythag(jsonNew["people"][0]["pose_keypoints_2d"][30],jsonOld["people"][0]["pose_keypoints_2d"][39],jsonNew["people"][0]["pose_keypoints_2d"][31],jsonOld["people"][0]["pose_keypoints_2d"][39])
+        if rr > rl:
+            rhipx = jsonNew["people"][0]["pose_keypoints_2d"][27]
+            rhipy = jsonNew["people"][0]["pose_keypoints_2d"][28]
+            rhipc = jsonNew["people"][0]["pose_keypoints_2d"][29]
+            rkneex = jsonNew["people"][0]["pose_keypoints_2d"][30]
+            rkneey = jsonNew["people"][0]["pose_keypoints_2d"][31]
+            rkneec = jsonNew["people"][0]["pose_keypoints_2d"][32]
+            ranklex = jsonNew["people"][0]["pose_keypoints_2d"][33]
+            rankley = jsonNew["people"][0]["pose_keypoints_2d"][34]
+            ranklec = jsonNew["people"][0]["pose_keypoints_2d"][35]
+            rbigtoex = jsonNew["people"][0]["pose_keypoints_2d"][66]
+            rbigtoey = jsonNew["people"][0]["pose_keypoints_2d"][67]
+            rbigtoec = jsonNew["people"][0]["pose_keypoints_2d"][68]
+            rsmalltoex = jsonNew["people"][0]["pose_keypoints_2d"][69]
+            rsmalltoey = jsonNew["people"][0]["pose_keypoints_2d"][70]
+            rsmalltoec = jsonNew["people"][0]["pose_keypoints_2d"][71]
+            rheelx = jsonNew["people"][0]["pose_keypoints_2d"][72]
+            rheely = jsonNew["people"][0]["pose_keypoints_2d"][73]
+            rheelc = jsonNew["people"][0]["pose_keypoints_2d"][74]
+
+            jsonNew["people"][0]["pose_keypoints_2d"][27] = jsonNew["people"][0]["pose_keypoints_2d"][36]
+            jsonNew["people"][0]["pose_keypoints_2d"][28] = jsonNew["people"][0]["pose_keypoints_2d"][37]
+            jsonNew["people"][0]["pose_keypoints_2d"][29] = jsonNew["people"][0]["pose_keypoints_2d"][38]
+            jsonNew["people"][0]["pose_keypoints_2d"][30] = jsonNew["people"][0]["pose_keypoints_2d"][39]
+            jsonNew["people"][0]["pose_keypoints_2d"][31] = jsonNew["people"][0]["pose_keypoints_2d"][40]
+            jsonNew["people"][0]["pose_keypoints_2d"][32] = jsonNew["people"][0]["pose_keypoints_2d"][41]
+            jsonNew["people"][0]["pose_keypoints_2d"][33] = jsonNew["people"][0]["pose_keypoints_2d"][42]
+            jsonNew["people"][0]["pose_keypoints_2d"][34] = jsonNew["people"][0]["pose_keypoints_2d"][43]
+            jsonNew["people"][0]["pose_keypoints_2d"][35] = jsonNew["people"][0]["pose_keypoints_2d"][44]
+            jsonNew["people"][0]["pose_keypoints_2d"][66] = jsonNew["people"][0]["pose_keypoints_2d"][57]
+            jsonNew["people"][0]["pose_keypoints_2d"][67] = jsonNew["people"][0]["pose_keypoints_2d"][58]
+            jsonNew["people"][0]["pose_keypoints_2d"][68] = jsonNew["people"][0]["pose_keypoints_2d"][59]
+            jsonNew["people"][0]["pose_keypoints_2d"][69] = jsonNew["people"][0]["pose_keypoints_2d"][60]
+            jsonNew["people"][0]["pose_keypoints_2d"][70] = jsonNew["people"][0]["pose_keypoints_2d"][61]
+            jsonNew["people"][0]["pose_keypoints_2d"][71] = jsonNew["people"][0]["pose_keypoints_2d"][62]
+            jsonNew["people"][0]["pose_keypoints_2d"][72] = jsonNew["people"][0]["pose_keypoints_2d"][63]
+            jsonNew["people"][0]["pose_keypoints_2d"][73] = jsonNew["people"][0]["pose_keypoints_2d"][64]
+            jsonNew["people"][0]["pose_keypoints_2d"][74] = jsonNew["people"][0]["pose_keypoints_2d"][65]
+
+            jsonNew["people"][0]["pose_keypoints_2d"][36] = rhipx
+            jsonNew["people"][0]["pose_keypoints_2d"][37] = rhipy
+            jsonNew["people"][0]["pose_keypoints_2d"][38] = rhipc
+            jsonNew["people"][0]["pose_keypoints_2d"][39] = rkneex
+            jsonNew["people"][0]["pose_keypoints_2d"][40] = rkneey
+            jsonNew["people"][0]["pose_keypoints_2d"][41] = rkneec
+            jsonNew["people"][0]["pose_keypoints_2d"][42] = ranklex
+            jsonNew["people"][0]["pose_keypoints_2d"][43] = rankley
+            jsonNew["people"][0]["pose_keypoints_2d"][44] = ranklec
+            jsonNew["people"][0]["pose_keypoints_2d"][57] = rbigtoex
+            jsonNew["people"][0]["pose_keypoints_2d"][58] = rbigtoey
+            jsonNew["people"][0]["pose_keypoints_2d"][59] = rbigtoec
+            jsonNew["people"][0]["pose_keypoints_2d"][60] = rsmalltoex
+            jsonNew["people"][0]["pose_keypoints_2d"][61] = rsmalltoey
+            jsonNew["people"][0]["pose_keypoints_2d"][62] = rsmalltoec
+            jsonNew["people"][0]["pose_keypoints_2d"][63] = rheelx
+            jsonNew["people"][0]["pose_keypoints_2d"][64] = rheely
+            jsonNew["people"][0]["pose_keypoints_2d"][65] = rheelc
+    except:
+        return jsonNew
+
+    return jsonNew
+
+def analyzeFrame(jsonData,analysisNum):
+    rTibia = pythag(jsonData["people"][0]["pose_keypoints_2d"][33],
+                    jsonData["people"][0]["pose_keypoints_2d"][30],
+                    jsonData["people"][0]["pose_keypoints_2d"][34],
+                    jsonData["people"][0]["pose_keypoints_2d"][31])
+    rFemur = pythag(jsonData["people"][0]["pose_keypoints_2d"][30],
+                    jsonData["people"][0]["pose_keypoints_2d"][27],
+                    jsonData["people"][0]["pose_keypoints_2d"][31],
+                    jsonData["people"][0]["pose_keypoints_2d"][28])
+    mid = pythag(jsonData["people"][0]["pose_keypoints_2d"][33],
+                 jsonData["people"][0]["pose_keypoints_2d"][27],
+                 jsonData["people"][0]["pose_keypoints_2d"][34],
+                 jsonData["people"][0]["pose_keypoints_2d"][28])
+
+    rkneeAngle = cosineLaw(rTibia, mid, rFemur)
+
+    rHumerus = pythag(jsonData["people"][0]["pose_keypoints_2d"][6],
+                      jsonData["people"][0]["pose_keypoints_2d"][9],
+                      jsonData["people"][0]["pose_keypoints_2d"][7],
+                      jsonData["people"][0]["pose_keypoints_2d"][10])
+    rRadius = pythag(jsonData["people"][0]["pose_keypoints_2d"][9],
+                     jsonData["people"][0]["pose_keypoints_2d"][12],
+                     jsonData["people"][0]["pose_keypoints_2d"][10],
+                     jsonData["people"][0]["pose_keypoints_2d"][13])
+    mid = pythag(jsonData["people"][0]["pose_keypoints_2d"][6],
+                 jsonData["people"][0]["pose_keypoints_2d"][12],
+                 jsonData["people"][0]["pose_keypoints_2d"][7],
+                 jsonData["people"][0]["pose_keypoints_2d"][13])
+
+    relbowAngle = cosineLaw(rHumerus, mid, rRadius)
+
+    lTibia = pythag(jsonData["people"][0]["pose_keypoints_2d"][42],
+                    jsonData["people"][0]["pose_keypoints_2d"][39],
+                    jsonData["people"][0]["pose_keypoints_2d"][43],
+                    jsonData["people"][0]["pose_keypoints_2d"][40])
+    lFemur = pythag(jsonData["people"][0]["pose_keypoints_2d"][39],
+                    jsonData["people"][0]["pose_keypoints_2d"][36],
+                    jsonData["people"][0]["pose_keypoints_2d"][40],
+                    jsonData["people"][0]["pose_keypoints_2d"][37])
+    mid = pythag(jsonData["people"][0]["pose_keypoints_2d"][42],
+                 jsonData["people"][0]["pose_keypoints_2d"][36],
+                 jsonData["people"][0]["pose_keypoints_2d"][43],
+                 jsonData["people"][0]["pose_keypoints_2d"][37])
+
+    lkneeAngle = cosineLaw(lTibia, mid, lFemur)
+
+    lHumerus = pythag(jsonData["people"][0]["pose_keypoints_2d"][15],
+                      jsonData["people"][0]["pose_keypoints_2d"][18],
+                      jsonData["people"][0]["pose_keypoints_2d"][16],
+                      jsonData["people"][0]["pose_keypoints_2d"][19])
+    lRadius = pythag(jsonData["people"][0]["pose_keypoints_2d"][18],
+                     jsonData["people"][0]["pose_keypoints_2d"][21],
+                     jsonData["people"][0]["pose_keypoints_2d"][19],
+                     jsonData["people"][0]["pose_keypoints_2d"][22])
+    mid = pythag(jsonData["people"][0]["pose_keypoints_2d"][15],
+                 jsonData["people"][0]["pose_keypoints_2d"][21],
+                 jsonData["people"][0]["pose_keypoints_2d"][16],
+                 jsonData["people"][0]["pose_keypoints_2d"][22])
+
+    lelbowAngle = cosineLaw(lHumerus, mid, lRadius)
+
+    imaginaryX = abs(
+        jsonData["people"][0]["pose_keypoints_2d"][3] - jsonData["people"][0]["pose_keypoints_2d"][24])
+    imaginaryY = abs(
+        jsonData["people"][0]["pose_keypoints_2d"][4] - jsonData["people"][0]["pose_keypoints_2d"][25])
+    back = pythag(jsonData["people"][0]["pose_keypoints_2d"][3],
+                  jsonData["people"][0]["pose_keypoints_2d"][24],
+                  jsonData["people"][0]["pose_keypoints_2d"][4],
+                  jsonData["people"][0]["pose_keypoints_2d"][25])
+
+    backAngle = cosineLaw(imaginaryX, imaginaryY, back)
+
+    rkneeAngle = "{0:.2f}".format(rkneeAngle)
+    relbowAngle = "{0:.2f}".format(relbowAngle)
+    lkneeAngle = "{0:.2f}".format(lkneeAngle)
+    lelbowAngle = "{0:.2f}".format(lelbowAngle)
+    backAngle = "{0:.2f}".format(backAngle)
+
+    if analysisNum == 1:
+        app.answerRknee.config(text=rkneeAngle)
+        app.answerRelbow.config(text=relbowAngle)
+        app.answerLknee.config(text=lkneeAngle)
+        app.answerLelbow.config(text=lelbowAngle)
+        app.answerBack.config(text=backAngle)
+    elif analysisNum ==2:
+        app.answerRkneeLS.config(text=rkneeAngle)
+        app.answerRelbowLS.config(text=relbowAngle)
+        app.answerLkneeLS.config(text=lkneeAngle)
+        app.answerLelbowLS.config(text=lelbowAngle)
+        app.answerBackLS.config(text=backAngle)
+
+def selectFile():
+    file = filedialog.askopenfilename(initialdir="/", title="Select file", filetypes=(
+    ("All Files", "*.*"), ("MOV files", "*.MOV"), ("MP4 files", "*.mp4"), ("AVI files", "*.avi")))
+    app.fileBox.insert(END, file)
+
+def playVideo():  # Creates the threads where the videos are played
+
+    thread = None
+    thread2 = None
+
+    if app.startButton.cget("text") == "Start":
+
+        global mainFile
+        global fileName
+        global directory
+        global video
+        global video2
+
+        mainFile = app.fileBox.get("1.0", 'end-1c')
+        fileName = os.path.basename(mainFile)
+        directory = os.path.splitext(mainFile)[0]
+
+        newClip = VideoFileClip(mainFile)
+        newFile = moviepy.video.fx.all.gamma_corr(newClip, .5)
+        newFile = moviepy.video.fx.all.lum_contrast(newFile,0,1,.15)
+        newFile.write_videofile(directory + "_Processed" + ".mp4")
+
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        # openPose = r"C:\Users\okeefel\Documents\openpose-1.4.0-win64-gpu-binaries\bin\OpenPoseDemo.exe"
+        openPose = r"bin\OpenPoseDemo.exe"
+        fileFlag = r" --video " + directory + "_Processed" + ".mp4" #unprocessed file to run
+        dataFlag = r" --write_json " + directory #where it saves the raw data
+        videoFlag = r" --write_video " + directory + "_Processed" + ".MOV"
+        # framesFlag = r" --frame_step " + app.framesBox.get("1.0", 'end-1c')#skips however many frames
+        displayFlag = r" --display 0" #Will not run on screen
+        peopleFlag = r" --number_people_max 2"
+        # trackingFlag = r" --tracking 0"
+        scaleFlag = r" --keypoint_scale 0"
+
+        os.chdir(r"C:\Users\okeefel\Documents\openpose-1.4.0-win64-gpu-binaries")
+        os.system(openPose + fileFlag + dataFlag + videoFlag + displayFlag + peopleFlag + scaleFlag)
+
+        video = imageio.get_reader(mainFile)
+        video2 = imageio.get_reader(directory + "_Processed" + ".MOV")
+
+        videoLabel = tk.Label()
+        videoLabel.pack()
+        videoLabel.place(x=20, y=300, anchor=NW)
+        thread = threading.Thread(target=stream, args=(videoLabel,))
+        thread.daemon = 1
+        thread.start()
+        videoLabel2 = tk.Label()
+        videoLabel2.pack()
+        videoLabel2.place(x=520, y=300, anchor=NW)
+        thread2 = threading.Thread(target=stream2, args=(videoLabel2,))
+        thread2.daemon = 1
+        thread2.start()
+
+        #Parse through all data
+
+        lastFrame = None
+        fileCount = 0
+
+        for file in os.listdir(directory): #file will be the json files
+            if file.endswith(".json"):
+                fileCount = fileCount + 1
+
+        lastFrame = None  # frame before the current one being analyzed
+        badFrames = 0  # number of bad frames between good ones
+        lastfootLangle = None
+        lastfootRangle = None
+        lastFramePerson = None
+        personNum =None
+        step = 1
+
+        for fileNum in range(fileCount,0,-1): #file will be the json files
+            jsonName = None
+            if fileNum <= 10 :
+                fileNum = fileNum-1
+                fileNum = str(fileNum)
+                jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_00000000000" + fileNum + "_keypoints.json"
+            elif fileNum > 10 and fileNum <= 100:
+                fileNum = fileNum - 1
+                fileNum = str(fileNum)
+                jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_0000000000" + fileNum + "_keypoints.json"
+            elif fileNum > 100:
+                fileNum = fileNum - 1
+                fileNum = str(fileNum)
+                jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_000000000" + fileNum + "_keypoints.json"
+
+            with open(jsonName) as handle:
+                jsonData = json.loads(handle.read())
+
+                personNum = checkPerson(jsonData)
+
+                #236 to 237 on jonathans frames to test
+                if lastFrame != None: #Check all of the important points against previous points as an attempt at tracking
+                    jsonData = trackingAlgo(jsonData,lastFrame)
+
+
+
+                #fill arrays then save graph
+                try:
+                    x_list = [jsonData["people"][0]["pose_keypoints_2d"][0], \
+                              jsonData["people"][0]["pose_keypoints_2d"][3], \
+                              jsonData["people"][0]["pose_keypoints_2d"][6], \
+                              jsonData["people"][0]["pose_keypoints_2d"][9], \
+                              jsonData["people"][0]["pose_keypoints_2d"][12], \
+                              jsonData["people"][0]["pose_keypoints_2d"][15], \
+                              jsonData["people"][0]["pose_keypoints_2d"][18], \
+                              jsonData["people"][0]["pose_keypoints_2d"][21], \
+                              jsonData["people"][0]["pose_keypoints_2d"][24], \
+                              jsonData["people"][0]["pose_keypoints_2d"][27], \
+                              jsonData["people"][0]["pose_keypoints_2d"][30], \
+                              jsonData["people"][0]["pose_keypoints_2d"][33], \
+                              jsonData["people"][0]["pose_keypoints_2d"][36], \
+                              jsonData["people"][0]["pose_keypoints_2d"][39], \
+                              jsonData["people"][0]["pose_keypoints_2d"][42], \
+                              jsonData["people"][0]["pose_keypoints_2d"][45], \
+                              jsonData["people"][0]["pose_keypoints_2d"][48], \
+                              jsonData["people"][0]["pose_keypoints_2d"][51], \
+                              jsonData["people"][0]["pose_keypoints_2d"][54], \
+                              jsonData["people"][0]["pose_keypoints_2d"][57], \
+                              jsonData["people"][0]["pose_keypoints_2d"][60], \
+                              jsonData["people"][0]["pose_keypoints_2d"][63], \
+                              jsonData["people"][0]["pose_keypoints_2d"][66], \
+                              jsonData["people"][0]["pose_keypoints_2d"][69], \
+                              jsonData["people"][0]["pose_keypoints_2d"][72], \
+                                ]
+                    y_list = [jsonData["people"][0]["pose_keypoints_2d"][1]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][4]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][7]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][10]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][13]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][16]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][19]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][22]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][25]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][28]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][31]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][34]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][37]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][40]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][43]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][46]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][49]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][52]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][55]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][58]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][61]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][64]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][67]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][70]*-1+1000, \
+                              jsonData["people"][0]["pose_keypoints_2d"][73]*-1+1000, \
+                              ]
+                    words = ["nose", \
+                             "neck", \
+                             "Rshoulder", \
+                             "Relbow", \
+                             "Rwrist", \
+                             "Lshoulder", \
+                             "Lelbow", \
+                             "Lwrist", \
+                             "Midhip", \
+                             "Rhip", \
+                             "Rknee", \
+                             "Rankle", \
+                             "Lhip", \
+                             "Lknee", \
+                             "Lankle", \
+                             "Reye", \
+                             "Leye", \
+                             "Rear", \
+                             "Lear", \
+                             "LBigtoe", \
+                             "LSmalltoe", \
+                             "Lheel", \
+                             "Rbigtoe", \
+                             "Rsmalltoe", \
+                             "Rheel", \
+                              ]
+
+                    fig, ax = matplotlib.pyplot.subplots()
+                    ax.scatter(x_list,y_list)
+
+                    for i, txt in enumerate(words):
+                        ax.annotate(txt,(x_list[i],y_list[i]))
+
+                    matplotlib.pyplot.axis([numpy.amin(x_list)-.1,numpy.amax(x_list)+.1,numpy.amin(y_list)-.1,numpy.amax(y_list)-.3])
+                    fig.savefig(directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_000" + fileNum + ".png")
+                except:
+                    badFrames = badFrames+1
+
+                if fileNum == str(fileCount-1): #The first frame starts with when ball is being released
+                    analyzeFrame(jsonData,1)
+
+                skipFrame = 0
+
+                try:
+                    if jsonData["people"][0]["pose_keypoints_2d"][59] >= .2 :
+                        footLfrontX = jsonData["people"][0]["pose_keypoints_2d"][57]
+                        footLfrontY = jsonData["people"][0]["pose_keypoints_2d"][58]
+                    elif jsonData["people"][0]["pose_keypoints_2d"][62] >= .2 :
+                        footLfrontX = jsonData["people"][0]["pose_keypoints_2d"][60]
+                        footLfrontY= jsonData["people"][0]["pose_keypoints_2d"][61]
+                    else:
+                        skipFrame = 1
+
+                    if jsonData["people"][0]["pose_keypoints_2d"][65] >= .2 :
+                        footLrearX = jsonData["people"][0]["pose_keypoints_2d"][63]
+                        footLrearY = jsonData["people"][0]["pose_keypoints_2d"][64]
+                    elif jsonData["people"][0]["pose_keypoints_2d"][44] >= .2 :
+                        footLrearX = jsonData["people"][0]["pose_keypoints_2d"][42]
+                        footLrearY= jsonData["people"][0]["pose_keypoints_2d"][43]
+                    else:
+                        skipFrame = 1
+                except:
+                    skipFrame = 1
+
+                if skipFrame == 0 :
+                    imaginaryX = abs(footLfrontX - footLrearX)
+                    imaginaryY = abs(footLfrontY - footLrearY)
+                    foot = pythag(footLfrontX,footLrearX,footLfrontY,footLrearY)
+
+                    footLangle = cosineLaw(imaginaryX, imaginaryY, foot)
+
+                    if (step == 1) & (fileNum != str(fileCount-1)):
+                        if footLangle > lastfootLangle+8:
+                            print(fileNum)
+                            analyzeFrame(lastFrame,2)
+                            step = step + 1
+
+                    lastfootLangle = footLangle
+
+                lastFrame = jsonData
+                lastFramePerson = personNum
+
+        os.remove(directory + "_Processed" + ".mp4")
+        app.startButton.config(text="Pause")
+    elif app.startButton.cget("text") == "Pause":
+        app.startButton.config(text="Continue")
+    elif app.startButton.cget("text") == "Continue":
+        app.startButton.config(text="Pause")
+
+def restartVideo():
+    app.startButton.config(text="Start")
+    playVideo()
+
+def stream(label):  # First Video
+
+    for image in video.iter_data():
+        while app.startButton.cget("text") == "Continue":
+            sleep(1)
+        width, height = cv2.GetSize(image)
+        img = Image.fromarray(image)
+        img2 = img.resize((500, 500), Image.ANTIALIAS)
+        img3 = ImageTk.PhotoImage(img2)
+        label.config(image=img3)
+        label.image = img3
+
+def stream2(label):  # Second Video
+
+    for image in video2.iter_data():
+        while app.startButton.cget("text") == "Continue":
+            sleep(1)
+
+        img = Image.fromarray(image)
+        img2 = img.resize((500, 500), Image.ANTIALIAS)
+        img3 = ImageTk.PhotoImage(img2)
+        label.config(image=img3)
+        label.image = img3
+
+root = tk.Tk()
+root.state('zoomed')
+app = Application(master=root)
+app.mainloop()
