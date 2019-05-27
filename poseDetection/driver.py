@@ -216,6 +216,49 @@ class Application(tk.Frame):
         self.answerBackLS.pack()
         self.answerBackLS.place(x=1000, y=160, anchor=NE)
 
+
+        self.labelRkneeSS = Label(root, text="Right Leg Angle at 2nd to Last Step:", font=self.normalFont)
+        self.labelRkneeSS.pack()
+        self.labelRkneeSS.place(x=1000, y=40, anchor=NW)
+
+        self.answerRkneeSS = Label(root, text="", font=self.normalFont)
+        self.answerRkneeSS.pack()
+        self.answerRkneeSS.place(x=1275, y=40, anchor=NE)
+
+        self.labelRelbowSS = Label(root, text="Right Arm Angle at 2nd to Last Step:", font=self.normalFont)
+        self.labelRelbowSS.pack()
+        self.labelRelbowSS.place(x=1000, y=70, anchor=NW)
+
+        self.answerRelbowSS = Label(root, text="", font=self.normalFont)
+        self.answerRelbowSS.pack()
+        self.answerRelbowSS.place(x=1275, y=70, anchor=NE)
+
+        self.labelLkneeSS = Label(root, text="Left Leg Angle at 2nd to Last Step:", font=self.normalFont)
+        self.labelLkneeSS.pack()
+        self.labelLkneeSS.place(x=1000, y=100, anchor=NW)
+
+        self.answerLkneeSS = Label(root, text="", font=self.normalFont)
+        self.answerLkneeSS.pack()
+        self.answerLkneeSS.place(x=1275, y=100, anchor=NE)
+
+        self.labelLelbowSS = Label(root, text="Left Arm Angle at 2nd to Last Step", font=self.normalFont)
+        self.labelLelbowSS.pack()
+        self.labelLelbowSS.place(x=1000, y=130, anchor=NW)
+
+        self.answerLelbowSS = Label(root, text="", font=self.normalFont)
+        self.answerLelbowSS.pack()
+        self.answerLelbowSS.place(x=1275, y=130, anchor=NE)
+
+        self.labelBackSS = Label(root, text="Back Angle at 2nd to Last Step:", font=self.normalFont)
+        self.labelBackSS.pack()
+        self.labelBackSS.place(x=1000, y=160, anchor=NW)
+
+        self.answerBackSS = Label(root, text="", font=self.normalFont)
+        self.answerBackSS.pack()
+        self.answerBackSS.place(x=1275, y=160, anchor=NE)
+
+
+
 def cosineLaw(a,mid,c):
 
     # (mid^2) = (a^2)+(c^2)-(2*a*c)*cos(midAngle)
@@ -419,6 +462,12 @@ def analyzeFrame(jsonData,analysisNum,personNum):
         app.answerLkneeLS.config(text=lkneeAngle)
         app.answerLelbowLS.config(text=lelbowAngle)
         app.answerBackLS.config(text=backAngle)
+    elif analysisNum == 3:
+        app.answerRkneeSS.config(text=rkneeAngle)
+        app.answerRelbowSS.config(text=relbowAngle)
+        app.answerLkneeSS.config(text=lkneeAngle)
+        app.answerLelbowSS.config(text=lelbowAngle)
+        app.answerBackSS.config(text=backAngle)
 
 def selectFile():
     file = filedialog.askopenfilename(initialdir="/", title="Select file", filetypes=(
@@ -682,15 +731,10 @@ def playVideo():  # Creates the threads where the videos are played
                             step = step + 1
                             print(jsonName)
 
-                    if (step == 2) & (fileNum != str(fileCount-1)):
+                    if (step == 2) & (fileNum != str(fileCount-1)): #Second to last step
                         if jsonData["people"][personNum]["pose_keypoints_2d"][30] > jsonData["people"][personNum]["pose_keypoints_2d"][39]:
                             if footRangle > 20:
                                 analyzeFrame(lastFrame,3,lastFramePerson)
-                                step = step + 1
-                                print(jsonName)
-                        else:
-                            if footLangle > 20:
-                                analyzeFrame(lastFrame, 3, lastFramePerson)
                                 step = step + 1
                                 print(jsonName)
 
@@ -699,6 +743,36 @@ def playVideo():  # Creates the threads where the videos are played
 
                 lastFrame = jsonData
                 lastFramePerson = personNum
+
+        data = {}
+
+        data['Release'] = []
+        data['Release'].append({
+            'Right Leg Angle' : app.answerRknee.cget("text"),
+            'Left Leg Angle': app.answerLknee.cget("text"),
+            'Right Arm Angle': app.answerRelbow.cget("text"),
+            'Left Arm Angle': app.answerLelbow.cget("text"),
+            'Back Angle': app.answerBack.cget("text"),
+        })
+        data['Last Step'] = []
+        data['Last Step'].append({
+            'Right Leg Angle': app.answerRkneeLS.cget("text"),
+            'Left Leg Angle': app.answerLkneeLS.cget("text"),
+            'Right Arm Angle': app.answerRelbowLS.cget("text"),
+            'Left Arm Angle': app.answerLelbowLS.cget("text"),
+            'Back Angle': app.answerBackLS.cget("text"),
+        })
+        data['2nd to Last Step'] = []
+        data['2nd to Last Step'].append({
+            'Right Leg Angle': app.answerRkneeSS.cget("text"),
+            'Left Leg Angle': app.answerLkneeSS.cget("text"),
+            'Right Arm Angle': app.answerRelbowSS.cget("text"),
+            'Left Arm Angle': app.answerLelbowSS.cget("text"),
+            'Back Angle': app.answerBackSS.cget("text"),
+        })
+
+        with open(directory + '.txt', 'w') as outfile:
+                json.dump(data,outfile)
 
         os.remove(directory + "_Processed" + ".mp4")
         app.startButton.config(text="Pause")
