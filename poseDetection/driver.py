@@ -74,6 +74,10 @@ class Application(tk.Frame):
         self.labelHeight.pack()
         self.labelHeight.place(x=20, y=130, anchor=NW)
 
+        self.labelShoe = Label(root, text="Shoe Size:", font=self.normalFont)
+        self.labelShoe.pack()
+        self.labelShoe.place(x=20, y=160, anchor=NW)
+
         self.boxName = Text(root, height=1, width=14)
         self.boxName.pack()
         self.boxName.place(x=95, y=43, anchor=NW)
@@ -105,6 +109,10 @@ class Application(tk.Frame):
         self.boxInches = Text(root, height=1, width=2)
         self.boxInches.pack()
         self.boxInches.place(x=190, y=133, anchor=NW)
+
+        self.boxShoe = Text(root, height=1, width=14)
+        self.boxShoe.pack()
+        self.boxShoe.place(x=95, y=163, anchor=NW)
 
         self.startButton = Button(root, height=2, width=15, text='Start', font=self.buttonFont, command=playVideo)
         self.startButton.pack()
@@ -175,6 +183,15 @@ class Application(tk.Frame):
         self.answerBack.pack()
         self.answerBack.place(x=725, y=160, anchor=NE)
 
+        self.labelVelocity = Label(root, text="Ball Velocity at Release:", font=self.normalFont)
+        self.labelVelocity.pack()
+        self.labelVelocity.place(x=500, y=190, anchor=NW)
+
+        self.answerVelocity = Label(root, text="", font=self.normalFont)
+        self.answerVelocity.pack()
+        self.answerVelocity.place(x=725, y=190, anchor=NE)
+
+
 
         self.labelRkneeLS = Label(root, text="Right Leg Angle at Last Step:", font=self.normalFont)
         self.labelRkneeLS.pack()
@@ -215,6 +232,15 @@ class Application(tk.Frame):
         self.answerBackLS = Label(root, text="", font=self.normalFont)
         self.answerBackLS.pack()
         self.answerBackLS.place(x=1000, y=160, anchor=NE)
+
+        self.labelVelocityLS = Label(root, text="Ball Velocity at Last Step:", font=self.normalFont)
+        self.labelVelocityLS.pack()
+        self.labelVelocityLS.place(x=750, y=190, anchor=NW)
+
+        self.answerVelocityLS = Label(root, text="", font=self.normalFont)
+        self.answerVelocityLS.pack()
+        self.answerVelocityLS.place(x=1000, y=190, anchor=NE)
+
 
 
         self.labelRkneeSS = Label(root, text="Right Leg Angle at 2nd to Last Step:", font=self.normalFont)
@@ -257,7 +283,13 @@ class Application(tk.Frame):
         self.answerBackSS.pack()
         self.answerBackSS.place(x=1275, y=160, anchor=NE)
 
+        self.labelVelocitySS = Label(root, text="Ball Velocity at 2nd to Last Step:", font=self.normalFont)
+        self.labelVelocitySS.pack()
+        self.labelVelocitySS.place(x=1000, y=190, anchor=NW)
 
+        self.answerVelocitySS = Label(root, text="", font=self.normalFont)
+        self.answerVelocitySS.pack()
+        self.answerVelocitySS.place(x=1275, y=190, anchor=NE)
 
 def cosineLaw(a,mid,c):
 
@@ -373,6 +405,51 @@ def trackingAlgo(jsonNew,jsonOld,personNum,lastFramePerson):
     return jsonNew
 
 def analyzeFrame(jsonData,analysisNum,personNum):
+
+    shoeNumber = app.boxShoe.get("1.0", 'end-1c')
+
+    if shoeNumber == 6:
+        shoeLength = 9.3125
+    elif shoeNumber == 6.5:
+        shoeLength = 9.5
+    elif shoeNumber == 7:
+        shoeLength = 9.6875
+    elif shoeNumber == 7.5:
+        shoeLength = 9.8125
+    elif shoeNumber == 8:
+        shoeLength = 10
+    elif shoeNumber == 8.5:
+        shoeLength = 10.1875
+    elif shoeNumber == 9:
+        shoeLength = 10.3125
+    elif shoeNumber == 9.5:
+        shoeLength = 10.5
+    elif shoeNumber == 10:
+        shoeLength = 10.6875
+    elif shoeNumber == 10.5:
+        shoeLength = 10.8125
+    elif shoeNumber == 11:
+        shoeLength = 11
+    elif shoeNumber == 11.5:
+        shoeLength = 11.1875
+    elif shoeNumber == 12:
+        shoeLength = 11.3125
+    elif shoeNumber == 12.5:
+        shoeLength = 11.5
+    elif shoeNumber == 13:
+        shoeLength = 11.6875
+    elif shoeNumber == 13.5:
+        shoeLength = 11.8125
+    elif shoeNumber == 14:
+        shoeLength = 12
+    elif shoeNumber == 14.5:
+        shoeLength = 12.1875
+    elif shoeNumber == 15:
+        shoeLength = 12.3125
+    else:
+        shoeLength = 10.6875  #average shoe size if left blank
+
+
     rTibia = pythag(jsonData["people"][personNum]["pose_keypoints_2d"][33],
                     jsonData["people"][personNum]["pose_keypoints_2d"][30],
                     jsonData["people"][personNum]["pose_keypoints_2d"][34],
@@ -746,6 +823,15 @@ def playVideo():  # Creates the threads where the videos are played
 
         data = {}
 
+        data['Info'] = []
+        data['Info'].append({
+            'Name': app.boxName.get("1.0", 'end-1c'),
+            'Gender': app.boxGender.get("1.0", 'end-1c'),
+            'Age': app.boxAge.get("1.0", 'end-1c'),
+            'Feet': app.boxFeet.get("1.0", 'end-1c'),
+            'Inches': app.boxInches.get("1.0", 'end-1c'),
+            'Shoe Size': app.boxShoe.get("1.0", 'end-1c'),
+        })
         data['Release'] = []
         data['Release'].append({
             'Right Leg Angle' : app.answerRknee.cget("text"),
