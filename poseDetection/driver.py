@@ -83,9 +83,9 @@ class Application(tk.Frame):
         self.boxName.place(x=95, y=43, anchor=NW)
 
         genderChoices = ["Male", "Female"]
-        genderMF = StringVar(root)
-        genderMF.set("Male")
-        self.boxGender = OptionMenu(root, genderMF, *genderChoices)
+        self.genderMF = StringVar(root)
+        self.genderMF.set("Male")
+        self.boxGender = OptionMenu(root, self.genderMF, *genderChoices)
         self.boxGender.config(width=12)
         self.boxGender.pack()
         self.boxGender.place(x=95, y=68, anchor=NW)
@@ -406,49 +406,6 @@ def trackingAlgo(jsonNew,jsonOld,personNum,lastFramePerson):
 
 def analyzeFrame(jsonData,analysisNum,personNum):
 
-    shoeNumber = app.boxShoe.get("1.0", 'end-1c')
-
-    if shoeNumber == 6:
-        shoeLength = 9.3125
-    elif shoeNumber == 6.5:
-        shoeLength = 9.5
-    elif shoeNumber == 7:
-        shoeLength = 9.6875
-    elif shoeNumber == 7.5:
-        shoeLength = 9.8125
-    elif shoeNumber == 8:
-        shoeLength = 10
-    elif shoeNumber == 8.5:
-        shoeLength = 10.1875
-    elif shoeNumber == 9:
-        shoeLength = 10.3125
-    elif shoeNumber == 9.5:
-        shoeLength = 10.5
-    elif shoeNumber == 10:
-        shoeLength = 10.6875
-    elif shoeNumber == 10.5:
-        shoeLength = 10.8125
-    elif shoeNumber == 11:
-        shoeLength = 11
-    elif shoeNumber == 11.5:
-        shoeLength = 11.1875
-    elif shoeNumber == 12:
-        shoeLength = 11.3125
-    elif shoeNumber == 12.5:
-        shoeLength = 11.5
-    elif shoeNumber == 13:
-        shoeLength = 11.6875
-    elif shoeNumber == 13.5:
-        shoeLength = 11.8125
-    elif shoeNumber == 14:
-        shoeLength = 12
-    elif shoeNumber == 14.5:
-        shoeLength = 12.1875
-    elif shoeNumber == 15:
-        shoeLength = 12.3125
-    else:
-        shoeLength = 10.6875  #average shoe size if left blank
-
 
     rTibia = pythag(jsonData["people"][personNum]["pose_keypoints_2d"][33],
                     jsonData["people"][personNum]["pose_keypoints_2d"][30],
@@ -628,6 +585,48 @@ def playVideo():  # Creates the threads where the videos are played
         step = 1
         skipFrame = 0
 
+        shoeNumber = app.boxShoe.get("1.0", 'end-1c')
+        if shoeNumber == 6:
+            shoeLength = 9.3125
+        elif shoeNumber == 6.5:
+            shoeLength = 9.5
+        elif shoeNumber == 7:
+            shoeLength = 9.6875
+        elif shoeNumber == 7.5:
+            shoeLength = 9.8125
+        elif shoeNumber == 8:
+            shoeLength = 10
+        elif shoeNumber == 8.5:
+            shoeLength = 10.1875
+        elif shoeNumber == 9:
+            shoeLength = 10.3125
+        elif shoeNumber == 9.5:
+            shoeLength = 10.5
+        elif shoeNumber == 10:
+            shoeLength = 10.6875
+        elif shoeNumber == 10.5:
+            shoeLength = 10.8125
+        elif shoeNumber == 11:
+            shoeLength = 11
+        elif shoeNumber == 11.5:
+            shoeLength = 11.1875
+        elif shoeNumber == 12:
+            shoeLength = 11.3125
+        elif shoeNumber == 12.5:
+            shoeLength = 11.5
+        elif shoeNumber == 13:
+            shoeLength = 11.6875
+        elif shoeNumber == 13.5:
+            shoeLength = 11.8125
+        elif shoeNumber == 14:
+            shoeLength = 12
+        elif shoeNumber == 14.5:
+            shoeLength = 12.1875
+        elif shoeNumber == 15:
+            shoeLength = 12.3125
+        else:
+            shoeLength = 10.6875  # average shoe size if left blank
+
         for fileNum in range(fileCount,0,-1): #file will be the json files
             jsonName = None
             if fileNum <= 10 :
@@ -744,9 +743,6 @@ def playVideo():  # Creates the threads where the videos are played
                 except:
                     badFrames = badFrames+1
 
-                if fileNum == str(fileCount-1): #The first frame starts with when ball is being released
-                    analyzeFrame(jsonData,1,personNum)
-
                 skipFrame = 0
 
                 try:
@@ -791,16 +787,31 @@ def playVideo():  # Creates the threads where the videos are played
                 except:
                     skipFrame = 1
 
+
+                if fileNum == str(fileCount-1): #The first frame starts with when ball is being released
+                    analyzeFrame(jsonData,1,personNum)
+                elif fileNum == str(fileCount-2): #Finds ball velocity using first and second frame
+
+                    footL = pythag(footLfrontX, footLrearX, footLfrontY, footLrearY)
+                    wristDistance = pythag(lastFrame["people"][personNum]["pose_keypoints_2d"][12], jsonData["people"][personNum]["pose_keypoints_2d"][12], \
+                                           lastFrame["people"][personNum]["pose_keypoints_2d"][13], jsonData["people"][personNum]["pose_keypoints_2d"][13])
+
+                    distanceInches = shoeLength * .85 * wristDistance / footL
+                    distanceMiles = distanceInches / 63360
+                    timeHours = (1 / 239.98) * (1 / 3600)
+                    ballVelocity = distanceMiles / timeHours
+                    app.answerVelocity.config(text=ballVelocity)
+
                 if skipFrame == 0 :
                     imaginaryX = abs(footLfrontX - footLrearX)
                     imaginaryY = abs(footLfrontY - footLrearY)
-                    foot = pythag(footLfrontX,footLrearX,footLfrontY,footLrearY)
-                    footLangle = cosineLaw(imaginaryX, imaginaryY, foot)
+                    footL = pythag(footLfrontX,footLrearX,footLfrontY,footLrearY)
+                    footLangle = cosineLaw(imaginaryX, imaginaryY, footL)
 
                     imaginaryX = abs(footRfrontX - footRrearX)
                     imaginaryY = abs(footRfrontY - footRrearY)
-                    foot = pythag(footRfrontX, footRrearX, footRfrontY, footRrearY)
-                    footRangle = cosineLaw(imaginaryX, imaginaryY, foot)
+                    footR = pythag(footRfrontX, footRrearX, footRfrontY, footRrearY)
+                    footRangle = cosineLaw(imaginaryX, imaginaryY, footR)
 
                     if (step == 1) & (fileNum != str(fileCount-1)):
                         if footLangle > lastfootLangle+8:
@@ -821,12 +832,22 @@ def playVideo():  # Creates the threads where the videos are played
                 lastFrame = jsonData
                 lastFramePerson = personNum
 
+                # lastfootRrearX = footRrearX
+                # lastfootRrearY = footRrearY
+                # lastfootRfrontX = footRfrontX
+                # lastfootRfrontY = footRfrontY
+                #
+                # lastfootLrearX = footLrearX
+                # lastfootLrearY = footLrearY
+                # lastfootLfrontX = footLfrontX
+                # lastfootLfrontY = footLfrontY
+
         data = {}
 
         data['Info'] = []
         data['Info'].append({
             'Name': app.boxName.get("1.0", 'end-1c'),
-            'Gender': app.boxGender.get("1.0", 'end-1c'),
+            'Gender': app.genderMF.get(),
             'Age': app.boxAge.get("1.0", 'end-1c'),
             'Feet': app.boxFeet.get("1.0", 'end-1c'),
             'Inches': app.boxInches.get("1.0", 'end-1c'),
@@ -839,6 +860,7 @@ def playVideo():  # Creates the threads where the videos are played
             'Right Arm Angle': app.answerRelbow.cget("text"),
             'Left Arm Angle': app.answerLelbow.cget("text"),
             'Back Angle': app.answerBack.cget("text"),
+            'Ball Velocity': app.answerVelocity.cget("text"),
         })
         data['Last Step'] = []
         data['Last Step'].append({
