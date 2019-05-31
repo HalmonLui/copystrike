@@ -570,6 +570,7 @@ def playVideo():  # Creates the threads where the videos are played
         #Parse through all data
 
         lastFrame = None
+        velocityFrame = None #Beggining of where velocity is measured from
         fileCount = 0
 
         for file in os.listdir(directory): #file will be the json files
@@ -790,16 +791,18 @@ def playVideo():  # Creates the threads where the videos are played
 
                 if fileNum == str(fileCount-1): #The first frame starts with when ball is being released
                     analyzeFrame(jsonData,1,personNum)
-                elif fileNum == str(fileCount-2): #Finds ball velocity using first and second frame
+                    velocityFrame = jsonData
+                elif fileNum == str(fileCount-4): #Finds ball velocity using first and second frame
 
                     footL = pythag(footLfrontX, footLrearX, footLfrontY, footLrearY)
-                    wristDistance = pythag(lastFrame["people"][personNum]["pose_keypoints_2d"][12], jsonData["people"][personNum]["pose_keypoints_2d"][12], \
-                                           lastFrame["people"][personNum]["pose_keypoints_2d"][13], jsonData["people"][personNum]["pose_keypoints_2d"][13])
+                    wristDistance = pythag(velocityFrame["people"][personNum]["pose_keypoints_2d"][12], jsonData["people"][personNum]["pose_keypoints_2d"][12], \
+                                           velocityFrame["people"][personNum]["pose_keypoints_2d"][13], jsonData["people"][personNum]["pose_keypoints_2d"][13])
 
                     distanceInches = shoeLength * .85 * wristDistance / footL
                     distanceMiles = distanceInches / 63360
                     timeHours = (1 / 239.98) * (1 / 3600)
                     ballVelocity = distanceMiles / timeHours
+                    ballVelocity = round(ballVelocity,2)
                     app.answerVelocity.config(text=ballVelocity)
 
                 if skipFrame == 0 :
