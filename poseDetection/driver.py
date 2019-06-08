@@ -241,6 +241,22 @@ class Application(tk.Frame):
         self.answerVelocityLS.pack()
         self.answerVelocityLS.place(x=1000, y=190, anchor=NE)
 
+        self.labelRearAngle = Label(root, text="Rear Foot Angle at Last Step:", font=self.normalFont)
+        self.labelRearAngle.pack()
+        self.labelRearAngle.place(x=750, y=220, anchor=NW)
+
+        self.answerRearAngle = Label(root, text="", font=self.normalFont)
+        self.answerRearAngle.pack()
+        self.answerRearAngle.place(x=1000, y=220, anchor=NE)
+
+        self.labelDistance = Label(root, text="Feet Distance Apart at Last Step:", font=self.normalFont)
+        self.labelDistance.pack()
+        self.labelDistance.place(x=750, y=250, anchor=NW)
+
+        self.answerDistance = Label(root, text="", font=self.normalFont)
+        self.answerDistance.pack()
+        self.answerDistance.place(x=1000, y=250, anchor=NE)
+
 
 
         self.labelRkneeSS = Label(root, text="Right Leg Angle at 2nd to Last Step:", font=self.normalFont)
@@ -571,6 +587,7 @@ def playVideo():  # Creates the threads where the videos are played
 
         lastFrame = None
         velocityFrame = None #Beggining of where velocity is measured from
+        velocityFrameNum = None
         fileCount = 0
 
         for file in os.listdir(directory): #file will be the json files
@@ -792,7 +809,7 @@ def playVideo():  # Creates the threads where the videos are played
                 if fileNum == str(fileCount-1): #The first frame starts with when ball is being released
                     analyzeFrame(jsonData,1,personNum)
                     velocityFrame = jsonData
-                elif fileNum == str(fileCount-4): #Finds ball velocity using first and second frame
+                elif fileNum == str(fileCount-3): #Finds ball velocity using first and second frame
 
                     footL = pythag(footLfrontX, footLrearX, footLfrontY, footLrearY)
                     wristDistance = pythag(velocityFrame["people"][personNum]["pose_keypoints_2d"][12], jsonData["people"][personNum]["pose_keypoints_2d"][12], \
@@ -800,7 +817,7 @@ def playVideo():  # Creates the threads where the videos are played
 
                     distanceInches = shoeLength * .85 * wristDistance / footL
                     distanceMiles = distanceInches / 63360
-                    timeHours = (1 / 239.98) * (1 / 3600)
+                    timeHours = (2 / 239.98) * (1 / 3600)
                     ballVelocity = distanceMiles / timeHours
                     ballVelocity = round(ballVelocity,2)
                     app.answerVelocity.config(text=ballVelocity)
@@ -816,18 +833,61 @@ def playVideo():  # Creates the threads where the videos are played
                     footR = pythag(footRfrontX, footRrearX, footRfrontY, footRrearY)
                     footRangle = cosineLaw(imaginaryX, imaginaryY, footR)
 
-                    if (step == 1) & (fileNum != str(fileCount-1)):
+                    if (step == 1) & (fileNum != str(fileCount-1)): #Last Step
                         if footLangle > lastfootLangle+8:
                             analyzeFrame(lastFrame,2,lastFramePerson)
                             step = step + 1
+                            velocityFrame = jsonData
+                            velocityFrameNum = fileNum
                             print(jsonName)
 
                     if (step == 2) & (fileNum != str(fileCount-1)): #Second to last step
+                        if fileNum == str(int(velocityFrameNum) - 3):  #Velocity for the last step
+                            footL = pythag(footLfrontX, footLrearX, footLfrontY, footLrearY)
+                            wristDistance = pythag(velocityFrame["people"][personNum]["pose_keypoints_2d"][12],
+                                                   jsonData["people"][personNum]["pose_keypoints_2d"][12], \
+                                                   velocityFrame["people"][personNum]["pose_keypoints_2d"][13],
+                                                   jsonData["people"][personNum]["pose_keypoints_2d"][13])
+
+                            distanceInches = shoeLength * .85 * wristDistance / footL
+                            distanceMiles = distanceInches / 63360
+                            timeHours = (2 / 239.98) * (1 / 3600)
+                            ballVelocity = distanceMiles / timeHours
+                            ballVelocity = round(ballVelocity, 2)
+                            app.answerVelocityLS.config(text=ballVelocity)
                         if jsonData["people"][personNum]["pose_keypoints_2d"][30] > jsonData["people"][personNum]["pose_keypoints_2d"][39]:
                             if footRangle > 20:
+                                # if footRfrontY < footRrearY:
+                                #     footRangle = footRangle * -1
+                                rearFootAngle = footLangle - footRangle
+                                rearFootAngle = round(rearFootAngle, 2)
+                                app.answerRearAngle.config(text=rearFootAngle)
+                                feetDistance = pythag(footLrearX, footRrearX, footLrearY, footRrearY)
+
+                                distanceInches = shoeLength * .85 * feetDistance / footL
+                                feetDistance = distanceInches / 12  #Converts to feet
+
+                                feetDistance = round(feetDistance, 2)
+                                app.answerDistance.config(text=feetDistance)
                                 analyzeFrame(lastFrame,3,lastFramePerson)
                                 step = step + 1
+                                velocityFrame = jsonData
+                                velocityFrameNum = fileNum
                                 print(jsonName)
+                    if (step == 3) & (fileNum != str(fileCount - 1)):
+                        if fileNum == str(int(velocityFrameNum) - 3):  #Velocity for the second to last step
+                            footR = pythag(footRfrontX, footRrearX, footRfrontY, footRrearY)
+                            wristDistance = pythag(velocityFrame["people"][personNum]["pose_keypoints_2d"][12],
+                                                   jsonData["people"][personNum]["pose_keypoints_2d"][12], \
+                                                   velocityFrame["people"][personNum]["pose_keypoints_2d"][13],
+                                                   jsonData["people"][personNum]["pose_keypoints_2d"][13])
+
+                            distanceInches = shoeLength * .85 * wristDistance / footR
+                            distanceMiles = distanceInches / 63360
+                            timeHours = (2 / 239.98) * (1 / 3600)
+                            ballVelocity = distanceMiles / timeHours
+                            ballVelocity = round(ballVelocity, 2)
+                            app.answerVelocitySS.config(text=ballVelocity)
 
                     lastfootLangle = footLangle
                     lastfootRangle = footRangle
@@ -864,6 +924,8 @@ def playVideo():  # Creates the threads where the videos are played
             'Left Arm Angle': app.answerLelbow.cget("text"),
             'Back Angle': app.answerBack.cget("text"),
             'Ball Velocity': app.answerVelocity.cget("text"),
+            'Rear Foot Angle': app.answerRearAngle.cget("text"),
+            'Feet Distance Apart': app.answerDistance.cget("text"),
         })
         data['Last Step'] = []
         data['Last Step'].append({
@@ -872,6 +934,7 @@ def playVideo():  # Creates the threads where the videos are played
             'Right Arm Angle': app.answerRelbowLS.cget("text"),
             'Left Arm Angle': app.answerLelbowLS.cget("text"),
             'Back Angle': app.answerBackLS.cget("text"),
+            'Ball Velocity': app.answerVelocityLS.cget("text"),
         })
         data['2nd to Last Step'] = []
         data['2nd to Last Step'].append({
@@ -880,6 +943,7 @@ def playVideo():  # Creates the threads where the videos are played
             'Right Arm Angle': app.answerRelbowSS.cget("text"),
             'Left Arm Angle': app.answerLelbowSS.cget("text"),
             'Back Angle': app.answerBackSS.cget("text"),
+            'Ball Velocity': app.answerVelocitySS.cget("text"),
         })
 
         with open(directory + '.txt', 'w') as outfile:
