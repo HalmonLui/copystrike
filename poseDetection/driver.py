@@ -541,17 +541,18 @@ def playVideo():  # Creates the threads where the videos are played
         fileName = os.path.basename(mainFile)
         directory = os.path.splitext(mainFile)[0]
 
-        newClip = VideoFileClip(mainFile)
-        newFile = moviepy.video.fx.all.gamma_corr(newClip, .5)
-        newFile = moviepy.video.fx.all.lum_contrast(newFile,0,1,.15)
-        newFile.write_videofile(directory + "_Processed" + ".mp4")
+        # newClip = VideoFileClip(mainFile)
+        # newFile = moviepy.video.fx.all.gamma_corr(newClip, .5)
+        # newFile = moviepy.video.fx.all.lum_contrast(newFile,0,1,.15)
+        # newFile.write_videofile(directory + "_Processed" + ".mp4")
 
         if not os.path.exists(directory):
             os.makedirs(directory)
 
         # openPose = r"C:\Users\okeefel\Documents\openpose-1.4.0-win64-gpu-binaries\bin\OpenPoseDemo.exe"
         openPose = r"bin\OpenPoseDemo.exe"
-        fileFlag = r" --video " + directory + "_Processed" + ".mp4" #unprocessed file to run
+        # fileFlag = r" --video " + directory + "_Processed" + ".mp4" #unprocessed file to run
+        fileFlag = r" --video " + directory + ".mov"  # unprocessed file to run
         dataFlag = r" --write_json " + directory #where it saves the raw data
         videoFlag = r" --write_video " + directory + "_Processed" + ".MOV"
         # framesFlag = r" --frame_step " + app.framesBox.get("1.0", 'end-1c')#skips however many frames
@@ -559,6 +560,7 @@ def playVideo():  # Creates the threads where the videos are played
         peopleFlag = r" --number_people_max 1"
         # trackingFlag = r" --tracking 0"
         scaleFlag = r" --keypoint_scale 0"
+        # handFlag = r"--hand"
 
         os.chdir(r"C:\Users\okeefel\Documents\openpose-1.4.0-win64-gpu-binaries")
         os.system(openPose + fileFlag + dataFlag + videoFlag + displayFlag + peopleFlag + scaleFlag)
@@ -602,8 +604,10 @@ def playVideo():  # Creates the threads where the videos are played
         personNum =None
         step = 1
         skipFrame = 0
+        laststepFileNum = None
 
         shoeNumber = app.boxShoe.get("1.0", 'end-1c')
+        shoeNumber = int(shoeNumber)
         if shoeNumber == 6:
             shoeLength = 9.3125
         elif shoeNumber == 6.5:
@@ -650,15 +654,19 @@ def playVideo():  # Creates the threads where the videos are played
             if fileNum <= 10 :
                 fileNum = fileNum-1
                 fileNum = str(fileNum)
-                jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_00000000000" + fileNum + "_keypoints.json"
+                # jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_00000000000" + fileNum + "_keypoints.json"
+                jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_00000000000" + fileNum + "_keypoints.json"
             elif fileNum > 10 and fileNum <= 100:
                 fileNum = fileNum - 1
                 fileNum = str(fileNum)
-                jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_0000000000" + fileNum + "_keypoints.json"
+                # jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_0000000000" + fileNum + "_keypoints.json"
+                jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_0000000000" + fileNum + "_keypoints.json"
             elif fileNum > 100:
                 fileNum = fileNum - 1
                 fileNum = str(fileNum)
-                jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_000000000" + fileNum + "_keypoints.json"
+                # jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_000000000" + fileNum + "_keypoints.json"
+                jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_000000000" + fileNum + "_keypoints.json"
+
 
             with open(jsonName) as handle:
                 jsonData = json.loads(handle.read())
@@ -758,6 +766,7 @@ def playVideo():  # Creates the threads where the videos are played
 
                     matplotlib.pyplot.axis([numpy.amin(x_list)-.1,numpy.amax(x_list)+.1,numpy.amin(y_list)-.1,numpy.amax(y_list)-.3])
                     fig.savefig(directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_000" + fileNum + ".png")
+                    matplotlib.pyplot.close("all")
                 except:
                     badFrames = badFrames+1
 
@@ -839,6 +848,7 @@ def playVideo():  # Creates the threads where the videos are played
                             step = step + 1
                             velocityFrame = jsonData
                             velocityFrameNum = fileNum
+                            laststepFileNum = int(fileNum)
                             print(jsonName)
 
                     if (step == 2) & (fileNum != str(fileCount-1)): #Second to last step
@@ -854,13 +864,16 @@ def playVideo():  # Creates the threads where the videos are played
                             timeHours = (2 / 239.98) * (1 / 3600)
                             ballVelocity = distanceMiles / timeHours
                             ballVelocity = round(ballVelocity, 2)
+                            if ballVelocity > 30:
+                                ballVelocity = "nan"
                             app.answerVelocityLS.config(text=ballVelocity)
                         if jsonData["people"][personNum]["pose_keypoints_2d"][30] > jsonData["people"][personNum]["pose_keypoints_2d"][39]:
-                            if footRangle > 20:
+                            if (footRangle > 20) & (int(fileNum) < (laststepFileNum-20)):
                                 # if footRfrontY < footRrearY:
                                 #     footRangle = footRangle * -1
                                 rearFootAngle = footLangle - footRangle
                                 rearFootAngle = round(rearFootAngle, 2)
+                                rearFootAngle = abs(rearFootAngle)
                                 app.answerRearAngle.config(text=rearFootAngle)
                                 feetDistance = pythag(footLrearX, footRrearX, footLrearY, footRrearY)
 
@@ -887,6 +900,8 @@ def playVideo():  # Creates the threads where the videos are played
                             timeHours = (2 / 239.98) * (1 / 3600)
                             ballVelocity = distanceMiles / timeHours
                             ballVelocity = round(ballVelocity, 2)
+                            if ballVelocity > 30:
+                                ballVelocity = "nan"
                             app.answerVelocitySS.config(text=ballVelocity)
 
                     lastfootLangle = footLangle
@@ -924,8 +939,6 @@ def playVideo():  # Creates the threads where the videos are played
             'Left Arm Angle': app.answerLelbow.cget("text"),
             'Back Angle': app.answerBack.cget("text"),
             'Ball Velocity': app.answerVelocity.cget("text"),
-            'Rear Foot Angle': app.answerRearAngle.cget("text"),
-            'Feet Distance Apart': app.answerDistance.cget("text"),
         })
         data['Last Step'] = []
         data['Last Step'].append({
@@ -935,6 +948,8 @@ def playVideo():  # Creates the threads where the videos are played
             'Left Arm Angle': app.answerLelbowLS.cget("text"),
             'Back Angle': app.answerBackLS.cget("text"),
             'Ball Velocity': app.answerVelocityLS.cget("text"),
+            'Rear Foot Angle': app.answerRearAngle.cget("text"),
+            'Feet Distance Apart': app.answerDistance.cget("text"),
         })
         data['2nd to Last Step'] = []
         data['2nd to Last Step'].append({
@@ -949,7 +964,7 @@ def playVideo():  # Creates the threads where the videos are played
         with open(directory + '.txt', 'w') as outfile:
                 json.dump(data,outfile)
 
-        os.remove(directory + "_Processed" + ".mp4")
+        # os.remove(directory + "_Processed" + ".mp4")
         app.startButton.config(text="Pause")
     elif app.startButton.cget("text") == "Pause":
         app.startButton.config(text="Continue")
