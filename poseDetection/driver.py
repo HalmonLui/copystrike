@@ -607,7 +607,8 @@ def playVideo():  # Creates the threads where the videos are played
         laststepFileNum = None
 
         shoeNumber = app.boxShoe.get("1.0", 'end-1c')
-        shoeNumber = int(shoeNumber)
+        if shoeNumber != '':
+            shoeNumber = int(shoeNumber)
         if shoeNumber == 6:
             shoeLength = 9.3125
         elif shoeNumber == 6.5:
@@ -759,14 +760,30 @@ def playVideo():  # Creates the threads where the videos are played
                               ]
 
                     fig, ax = matplotlib.pyplot.subplots()
-                    ax.scatter(x_list,y_list)
 
-                    for i, txt in enumerate(words):
-                        ax.annotate(txt,(x_list[i],y_list[i]))
+                    removeArr = []
 
-                    matplotlib.pyplot.axis([numpy.amin(x_list)-.1,numpy.amax(x_list)+.1,numpy.amin(y_list)-.1,numpy.amax(y_list)-.3])
+                    for i in range(25):
+                        if x_list[i] == 0:
+                            removeArr.append(i)
+
+                    # removeArr = where(x_list == "0." )
+                    newX = delete(x_list,removeArr)
+                    newY = delete(y_list, removeArr)
+                    newT = delete(words, removeArr)
+
+                    # print(removeArr)
+                    # print(newX)
+                    # print(newY)
+
+                    ax.scatter(newX,newY)
+                    for i, txt in enumerate(newT):
+                        ax.annotate(txt,(newX[i],newY[i]))
+
+                    matplotlib.pyplot.axis([numpy.amin(newX)-1,numpy.amax(newX)+1,numpy.amin(newY)-1,numpy.amax(newY)-3])
                     fig.savefig(directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_000" + fileNum + ".png")
                     matplotlib.pyplot.close("all")
+
                 except:
                     badFrames = badFrames+1
 
