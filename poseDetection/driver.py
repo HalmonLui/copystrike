@@ -131,13 +131,29 @@ class Application(tk.Frame):
         self.fileBox.pack()
         self.fileBox.place(x=305, y=43, anchor=NW)
 
-        self.labelFrames = Label(root, text="Frames:", font=self.normalFont)
-        self.labelFrames.pack()
-        self.labelFrames.place(x=230, y=70, anchor=NW)
+        self.labelPeople = Label(root, text="Multiple People:", font=self.normalFont)
+        self.labelPeople.pack()
+        self.labelPeople.place(x=230, y=70, anchor=NW)
 
-        self.framesBox = Text(root, height=1, width=14)
-        self.framesBox.pack()
-        self.framesBox.place(x=305, y=73, anchor=NW)
+        peopleChoices = ["No", "Yes"]
+        self.multiplePeople = StringVar(root)
+        self.multiplePeople.set("No")
+        self.boxPeople = OptionMenu(root, self.multiplePeople, *peopleChoices)
+        self.boxPeople.config(width=3)
+        self.boxPeople.pack()
+        self.boxPeople.place(x=360, y=68, anchor=NW)
+
+        self.labelCB = Label(root, text="Contrast/Brightness:", font=self.normalFont)
+        self.labelCB.pack()
+        self.labelCB.place(x=230, y=103, anchor=NW)
+
+        cbChoices = ["No", "Yes"]
+        self.brightCont = StringVar(root)
+        self.brightCont.set("No")
+        self.boxCB = OptionMenu(root, self.brightCont, *cbChoices)
+        self.boxCB.config(width=3)
+        self.boxCB.pack()
+        self.boxCB.place(x=360, y=101, anchor=NW)
 
         self.labelPerceived = Label(root, text="Perceived Values:", font=self.categoryFont)
         self.labelPerceived.pack()
@@ -541,23 +557,29 @@ def playVideo():  # Creates the threads where the videos are played
         fileName = os.path.basename(mainFile)
         directory = os.path.splitext(mainFile)[0]
 
-        # newClip = VideoFileClip(mainFile)
-        # newFile = moviepy.video.fx.all.gamma_corr(newClip, .5)
-        # newFile = moviepy.video.fx.all.lum_contrast(newFile,0,1,.15)
-        # newFile.write_videofile(directory + "_Processed" + ".mp4")
+        if app.brightCont.get() == "Yes":
+            newClip = VideoFileClip(mainFile)
+            newFile = moviepy.video.fx.all.gamma_corr(newClip, .5)
+            newFile = moviepy.video.fx.all.lum_contrast(newFile,0,1,.15)
+            newFile.write_videofile(directory + "_Processed" + ".mp4")
 
         if not os.path.exists(directory):
             os.makedirs(directory)
 
         # openPose = r"C:\Users\okeefel\Documents\openpose-1.4.0-win64-gpu-binaries\bin\OpenPoseDemo.exe"
         openPose = r"bin\OpenPoseDemo.exe"
-        # fileFlag = r" --video " + directory + "_Processed" + ".mp4" #unprocessed file to run
-        fileFlag = r" --video " + directory + ".mov"  # unprocessed file to run
+        if app.brightCont.get() == "No":
+            fileFlag = r" --video " + directory + ".mov"  # unprocessed file to run
+        else:
+            fileFlag = r" --video " + directory + "_Processed" + ".mp4" #file with changed brightness and contrast
         dataFlag = r" --write_json " + directory #where it saves the raw data
         videoFlag = r" --write_video " + directory + "_Processed" + ".MOV"
         # framesFlag = r" --frame_step " + app.framesBox.get("1.0", 'end-1c')#skips however many frames
         displayFlag = r" --display 0" #Will not run on screen
-        peopleFlag = r" --number_people_max 1"
+        if app.multiplePeople.get() == "No":
+            peopleFlag = r" --number_people_max 1"
+        else:
+            peopleFlag = r" --number_people_max 2"
         # trackingFlag = r" --tracking 0"
         scaleFlag = r" --keypoint_scale 0"
         # handFlag = r"--hand"
@@ -566,7 +588,10 @@ def playVideo():  # Creates the threads where the videos are played
         os.system(openPose + fileFlag + dataFlag + videoFlag + displayFlag + peopleFlag + scaleFlag)
 
         video = imageio.get_reader(mainFile)
+        # if app.brightCont.get() == "No":
         video2 = imageio.get_reader(directory + "_Processed" + ".MOV")
+        # else:
+        #     video2 = imageio.get_reader(directory + "_Processed" + ".mp4")
 
         vid = cv2.VideoCapture(mainFile)  #used to capture width
         height = vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
@@ -655,288 +680,295 @@ def playVideo():  # Creates the threads where the videos are played
             if fileNum <= 10 :
                 fileNum = fileNum-1
                 fileNum = str(fileNum)
-                # jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_00000000000" + fileNum + "_keypoints.json"
-                jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_00000000000" + fileNum + "_keypoints.json"
+                if app.brightCont.get() == "No":
+                    jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_00000000000" + fileNum + "_keypoints.json"
+                else:
+                    sonName = directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_00000000000" + fileNum + "_keypoints.json"
             elif fileNum > 10 and fileNum <= 100:
                 fileNum = fileNum - 1
                 fileNum = str(fileNum)
-                # jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_0000000000" + fileNum + "_keypoints.json"
-                jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_0000000000" + fileNum + "_keypoints.json"
+                if app.brightCont.get() == "No":
+                    jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_0000000000" + fileNum + "_keypoints.json"
+                else:
+                    jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_0000000000" + fileNum + "_keypoints.json"
             elif fileNum > 100:
                 fileNum = fileNum - 1
                 fileNum = str(fileNum)
-                # jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_000000000" + fileNum + "_keypoints.json"
-                jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_000000000" + fileNum + "_keypoints.json"
+                if app.brightCont.get() == "No":
+                    jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_000000000" + fileNum + "_keypoints.json"
+                else:
+                    jsonName = directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_000000000" + fileNum + "_keypoints.json"
+            try:
+                with open(jsonName) as handle:
+                    jsonData = json.loads(handle.read())
 
+                    personNum = checkPerson(jsonData,width)
 
-            with open(jsonName) as handle:
-                jsonData = json.loads(handle.read())
+                    #236 to 237 on jonathans frames to test
+                    if (lastFrame != None) & (skipFrame != 1): #Check all of the important points against previous points as an attempt at tracking
+                        jsonData = trackingAlgo(jsonData,lastFrame,personNum,lastFramePerson)
 
-                personNum = checkPerson(jsonData,width)
+                    #fill arrays then save graph
+                    try:
+                        x_list = [jsonData["people"][personNum]["pose_keypoints_2d"][0], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][3], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][6], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][9], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][12], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][15], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][18], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][21], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][24], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][27], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][30], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][33], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][36], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][39], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][42], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][45], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][48], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][51], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][54], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][57], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][60], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][63], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][66], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][69], \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][72], \
+                                    ]
+                        y_list = [jsonData["people"][personNum]["pose_keypoints_2d"][1]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][4]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][7]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][10]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][13]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][16]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][19]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][22]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][25]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][28]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][31]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][34]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][37]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][40]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][43]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][46]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][49]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][52]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][55]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][58]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][61]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][64]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][67]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][70]*-1+1000, \
+                                  jsonData["people"][personNum]["pose_keypoints_2d"][73]*-1+1000, \
+                                  ]
+                        words = ["nose", \
+                                 "neck", \
+                                 "Rshoulder", \
+                                 "Relbow", \
+                                 "Rwrist", \
+                                 "Lshoulder", \
+                                 "Lelbow", \
+                                 "Lwrist", \
+                                 "Midhip", \
+                                 "Rhip", \
+                                 "Rknee", \
+                                 "Rankle", \
+                                 "Lhip", \
+                                 "Lknee", \
+                                 "Lankle", \
+                                 "Reye", \
+                                 "Leye", \
+                                 "Rear", \
+                                 "Lear", \
+                                 "LBigtoe", \
+                                 "LSmalltoe", \
+                                 "Lheel", \
+                                 "Rbigtoe", \
+                                 "Rsmalltoe", \
+                                 "Rheel", \
+                                  ]
 
-                #236 to 237 on jonathans frames to test
-                if (lastFrame != None) & (skipFrame != 1): #Check all of the important points against previous points as an attempt at tracking
-                    jsonData = trackingAlgo(jsonData,lastFrame,personNum,lastFramePerson)
+                        fig, ax = matplotlib.pyplot.subplots()
 
-                #fill arrays then save graph
-                try:
-                    x_list = [jsonData["people"][personNum]["pose_keypoints_2d"][0], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][3], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][6], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][9], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][12], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][15], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][18], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][21], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][24], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][27], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][30], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][33], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][36], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][39], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][42], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][45], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][48], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][51], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][54], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][57], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][60], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][63], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][66], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][69], \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][72], \
-                                ]
-                    y_list = [jsonData["people"][personNum]["pose_keypoints_2d"][1]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][4]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][7]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][10]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][13]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][16]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][19]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][22]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][25]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][28]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][31]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][34]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][37]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][40]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][43]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][46]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][49]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][52]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][55]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][58]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][61]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][64]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][67]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][70]*-1+1000, \
-                              jsonData["people"][personNum]["pose_keypoints_2d"][73]*-1+1000, \
-                              ]
-                    words = ["nose", \
-                             "neck", \
-                             "Rshoulder", \
-                             "Relbow", \
-                             "Rwrist", \
-                             "Lshoulder", \
-                             "Lelbow", \
-                             "Lwrist", \
-                             "Midhip", \
-                             "Rhip", \
-                             "Rknee", \
-                             "Rankle", \
-                             "Lhip", \
-                             "Lknee", \
-                             "Lankle", \
-                             "Reye", \
-                             "Leye", \
-                             "Rear", \
-                             "Lear", \
-                             "LBigtoe", \
-                             "LSmalltoe", \
-                             "Lheel", \
-                             "Rbigtoe", \
-                             "Rsmalltoe", \
-                             "Rheel", \
-                              ]
+                        removeArr = []
 
-                    fig, ax = matplotlib.pyplot.subplots()
+                        for i in range(25):
+                            if x_list[i] == 0:
+                                removeArr.append(i)
 
-                    removeArr = []
+                        # removeArr = where(x_list == "0." )
+                        newX = delete(x_list,removeArr)
+                        newY = delete(y_list, removeArr)
+                        newT = delete(words, removeArr)
 
-                    for i in range(25):
-                        if x_list[i] == 0:
-                            removeArr.append(i)
+                        # print(removeArr)
+                        # print(newX)
+                        # print(newY)
 
-                    # removeArr = where(x_list == "0." )
-                    newX = delete(x_list,removeArr)
-                    newY = delete(y_list, removeArr)
-                    newT = delete(words, removeArr)
+                        ax.scatter(newX,newY)
+                        for i, txt in enumerate(newT):
+                            ax.annotate(txt,(newX[i],newY[i]))
 
-                    # print(removeArr)
-                    # print(newX)
-                    # print(newY)
+                        matplotlib.pyplot.axis([numpy.amin(newX)-1,numpy.amax(newX)+1,numpy.amin(newY)-1,numpy.amax(newY)-3])
+                        fig.savefig(directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_000" + fileNum + ".png")
+                        matplotlib.pyplot.close("all")
 
-                    ax.scatter(newX,newY)
-                    for i, txt in enumerate(newT):
-                        ax.annotate(txt,(newX[i],newY[i]))
+                    except:
+                        badFrames = badFrames+1
 
-                    matplotlib.pyplot.axis([numpy.amin(newX)-1,numpy.amax(newX)+1,numpy.amin(newY)-1,numpy.amax(newY)-3])
-                    fig.savefig(directory + r"/" + os.path.splitext(fileName)[0] + "_Processed_000" + fileNum + ".png")
-                    matplotlib.pyplot.close("all")
+                    skipFrame = 0
 
-                except:
-                    badFrames = badFrames+1
+                    try:
+                        if jsonData["people"][personNum]["pose_keypoints_2d"][59] >= .2 :
+                            footLfrontX = jsonData["people"][personNum]["pose_keypoints_2d"][57]
+                            footLfrontY = jsonData["people"][personNum]["pose_keypoints_2d"][58]
+                        elif jsonData["people"][0]["pose_keypoints_2d"][62] >= .2 :
+                            footLfrontX = jsonData["people"][personNum]["pose_keypoints_2d"][60]
+                            footLfrontY= jsonData["people"][personNum]["pose_keypoints_2d"][61]
+                        else:
+                            skipFrame = 1
 
-                skipFrame = 0
-
-                try:
-                    if jsonData["people"][personNum]["pose_keypoints_2d"][59] >= .2 :
-                        footLfrontX = jsonData["people"][personNum]["pose_keypoints_2d"][57]
-                        footLfrontY = jsonData["people"][personNum]["pose_keypoints_2d"][58]
-                    elif jsonData["people"][0]["pose_keypoints_2d"][62] >= .2 :
-                        footLfrontX = jsonData["people"][personNum]["pose_keypoints_2d"][60]
-                        footLfrontY= jsonData["people"][personNum]["pose_keypoints_2d"][61]
-                    else:
+                        if jsonData["people"][personNum]["pose_keypoints_2d"][65] >= .2 :
+                            footLrearX = jsonData["people"][personNum]["pose_keypoints_2d"][63]
+                            footLrearY = jsonData["people"][personNum]["pose_keypoints_2d"][64]
+                        elif jsonData["people"][personNum]["pose_keypoints_2d"][44] >= .2 :
+                            footLrearX = jsonData["people"][personNum]["pose_keypoints_2d"][42]
+                            footLrearY= jsonData["people"][personNum]["pose_keypoints_2d"][43]
+                        else:
+                            skipFrame = 1
+                    except:
                         skipFrame = 1
 
-                    if jsonData["people"][personNum]["pose_keypoints_2d"][65] >= .2 :
-                        footLrearX = jsonData["people"][personNum]["pose_keypoints_2d"][63]
-                        footLrearY = jsonData["people"][personNum]["pose_keypoints_2d"][64]
-                    elif jsonData["people"][personNum]["pose_keypoints_2d"][44] >= .2 :
-                        footLrearX = jsonData["people"][personNum]["pose_keypoints_2d"][42]
-                        footLrearY= jsonData["people"][personNum]["pose_keypoints_2d"][43]
-                    else:
+                    try:
+                        if jsonData["people"][personNum]["pose_keypoints_2d"][68] >= .2 :
+                            footRfrontX = jsonData["people"][personNum]["pose_keypoints_2d"][66]
+                            footRfrontY = jsonData["people"][personNum]["pose_keypoints_2d"][67]
+                        elif jsonData["people"][0]["pose_keypoints_2d"][71] >= .2 :
+                            footRfrontX = jsonData["people"][personNum]["pose_keypoints_2d"][69]
+                            footRfrontY= jsonData["people"][personNum]["pose_keypoints_2d"][70]
+                        else:
+                            skipFrame = 1
+
+                        if jsonData["people"][personNum]["pose_keypoints_2d"][74] >= .2 :
+                            footRrearX = jsonData["people"][personNum]["pose_keypoints_2d"][72]
+                            footRrearY = jsonData["people"][personNum]["pose_keypoints_2d"][73]
+                        elif jsonData["people"][personNum]["pose_keypoints_2d"][35] >= .2 :
+                            footRrearX = jsonData["people"][personNum]["pose_keypoints_2d"][33]
+                            footRrearY= jsonData["people"][personNum]["pose_keypoints_2d"][34]
+                        else:
+                            skipFrame = 1
+                    except:
                         skipFrame = 1
-                except:
-                    skipFrame = 1
-
-                try:
-                    if jsonData["people"][personNum]["pose_keypoints_2d"][68] >= .2 :
-                        footRfrontX = jsonData["people"][personNum]["pose_keypoints_2d"][66]
-                        footRfrontY = jsonData["people"][personNum]["pose_keypoints_2d"][67]
-                    elif jsonData["people"][0]["pose_keypoints_2d"][71] >= .2 :
-                        footRfrontX = jsonData["people"][personNum]["pose_keypoints_2d"][69]
-                        footRfrontY= jsonData["people"][personNum]["pose_keypoints_2d"][70]
-                    else:
-                        skipFrame = 1
-
-                    if jsonData["people"][personNum]["pose_keypoints_2d"][74] >= .2 :
-                        footRrearX = jsonData["people"][personNum]["pose_keypoints_2d"][72]
-                        footRrearY = jsonData["people"][personNum]["pose_keypoints_2d"][73]
-                    elif jsonData["people"][personNum]["pose_keypoints_2d"][35] >= .2 :
-                        footRrearX = jsonData["people"][personNum]["pose_keypoints_2d"][33]
-                        footRrearY= jsonData["people"][personNum]["pose_keypoints_2d"][34]
-                    else:
-                        skipFrame = 1
-                except:
-                    skipFrame = 1
 
 
-                if fileNum == str(fileCount-1): #The first frame starts with when ball is being released
-                    analyzeFrame(jsonData,1,personNum)
-                    velocityFrame = jsonData
-                elif fileNum == str(fileCount-3): #Finds ball velocity using first and second frame
+                    if fileNum == str(fileCount-1): #The first frame starts with when ball is being released
+                        analyzeFrame(jsonData,1,personNum)
+                        velocityFrame = jsonData
+                    elif fileNum == str(fileCount-3): #Finds ball velocity using first and second frame
 
-                    footL = pythag(footLfrontX, footLrearX, footLfrontY, footLrearY)
-                    wristDistance = pythag(velocityFrame["people"][personNum]["pose_keypoints_2d"][12], jsonData["people"][personNum]["pose_keypoints_2d"][12], \
-                                           velocityFrame["people"][personNum]["pose_keypoints_2d"][13], jsonData["people"][personNum]["pose_keypoints_2d"][13])
+                        footL = pythag(footLfrontX, footLrearX, footLfrontY, footLrearY)
+                        wristDistance = pythag(velocityFrame["people"][personNum]["pose_keypoints_2d"][12], jsonData["people"][personNum]["pose_keypoints_2d"][12], \
+                                               velocityFrame["people"][personNum]["pose_keypoints_2d"][13], jsonData["people"][personNum]["pose_keypoints_2d"][13])
 
-                    distanceInches = shoeLength * .85 * wristDistance / footL
-                    distanceMiles = distanceInches / 63360
-                    timeHours = (2 / 239.98) * (1 / 3600)
-                    ballVelocity = distanceMiles / timeHours
-                    ballVelocity = round(ballVelocity,2)
-                    app.answerVelocity.config(text=ballVelocity)
+                        distanceInches = shoeLength * .85 * wristDistance / footL
+                        distanceMiles = distanceInches / 63360
+                        timeHours = (2 / 239.98) * (1 / 3600)
+                        ballVelocity = distanceMiles / timeHours
+                        ballVelocity = round(ballVelocity,2)
+                        app.answerVelocity.config(text=ballVelocity)
 
-                if skipFrame == 0 :
-                    imaginaryX = abs(footLfrontX - footLrearX)
-                    imaginaryY = abs(footLfrontY - footLrearY)
-                    footL = pythag(footLfrontX,footLrearX,footLfrontY,footLrearY)
-                    footLangle = cosineLaw(imaginaryX, imaginaryY, footL)
+                    if skipFrame == 0 :
+                        imaginaryX = abs(footLfrontX - footLrearX)
+                        imaginaryY = abs(footLfrontY - footLrearY)
+                        footL = pythag(footLfrontX,footLrearX,footLfrontY,footLrearY)
+                        footLangle = cosineLaw(imaginaryX, imaginaryY, footL)
 
-                    imaginaryX = abs(footRfrontX - footRrearX)
-                    imaginaryY = abs(footRfrontY - footRrearY)
-                    footR = pythag(footRfrontX, footRrearX, footRfrontY, footRrearY)
-                    footRangle = cosineLaw(imaginaryX, imaginaryY, footR)
+                        imaginaryX = abs(footRfrontX - footRrearX)
+                        imaginaryY = abs(footRfrontY - footRrearY)
+                        footR = pythag(footRfrontX, footRrearX, footRfrontY, footRrearY)
+                        footRangle = cosineLaw(imaginaryX, imaginaryY, footR)
 
-                    if (step == 1) & (fileNum != str(fileCount-1)): #Last Step
-                        if footLangle > lastfootLangle+8:
-                            analyzeFrame(lastFrame,2,lastFramePerson)
-                            step = step + 1
-                            velocityFrame = jsonData
-                            velocityFrameNum = fileNum
-                            laststepFileNum = int(fileNum)
-                            print(jsonName)
-
-                    if (step == 2) & (fileNum != str(fileCount-1)): #Second to last step
-                        if fileNum == str(int(velocityFrameNum) - 3):  #Velocity for the last step
-                            footL = pythag(footLfrontX, footLrearX, footLfrontY, footLrearY)
-                            wristDistance = pythag(velocityFrame["people"][personNum]["pose_keypoints_2d"][12],
-                                                   jsonData["people"][personNum]["pose_keypoints_2d"][12], \
-                                                   velocityFrame["people"][personNum]["pose_keypoints_2d"][13],
-                                                   jsonData["people"][personNum]["pose_keypoints_2d"][13])
-
-                            distanceInches = shoeLength * .85 * wristDistance / footL
-                            distanceMiles = distanceInches / 63360
-                            timeHours = (2 / 239.98) * (1 / 3600)
-                            ballVelocity = distanceMiles / timeHours
-                            ballVelocity = round(ballVelocity, 2)
-                            if ballVelocity > 30:
-                                ballVelocity = "nan"
-                            app.answerVelocityLS.config(text=ballVelocity)
-                        if jsonData["people"][personNum]["pose_keypoints_2d"][30] > jsonData["people"][personNum]["pose_keypoints_2d"][39]:
-                            if (footRangle > 20) & (int(fileNum) < (laststepFileNum-20)):
-                                # if footRfrontY < footRrearY:
-                                #     footRangle = footRangle * -1
-                                rearFootAngle = footLangle - footRangle
-                                rearFootAngle = round(rearFootAngle, 2)
-                                rearFootAngle = abs(rearFootAngle)
-                                app.answerRearAngle.config(text=rearFootAngle)
-                                feetDistance = pythag(footLrearX, footRrearX, footLrearY, footRrearY)
-
-                                distanceInches = shoeLength * .85 * feetDistance / footL
-                                feetDistance = distanceInches / 12  #Converts to feet
-
-                                feetDistance = round(feetDistance, 2)
-                                app.answerDistance.config(text=feetDistance)
-                                analyzeFrame(lastFrame,3,lastFramePerson)
+                        if (step == 1) & (fileNum != str(fileCount-1)): #Last Step
+                            if footLangle > lastfootLangle+8:
+                                analyzeFrame(lastFrame,2,lastFramePerson)
                                 step = step + 1
                                 velocityFrame = jsonData
                                 velocityFrameNum = fileNum
+                                laststepFileNum = int(fileNum)
                                 print(jsonName)
-                    if (step == 3) & (fileNum != str(fileCount - 1)):
-                        if fileNum == str(int(velocityFrameNum) - 3):  #Velocity for the second to last step
-                            footR = pythag(footRfrontX, footRrearX, footRfrontY, footRrearY)
-                            wristDistance = pythag(velocityFrame["people"][personNum]["pose_keypoints_2d"][12],
-                                                   jsonData["people"][personNum]["pose_keypoints_2d"][12], \
-                                                   velocityFrame["people"][personNum]["pose_keypoints_2d"][13],
-                                                   jsonData["people"][personNum]["pose_keypoints_2d"][13])
 
-                            distanceInches = shoeLength * .85 * wristDistance / footR
-                            distanceMiles = distanceInches / 63360
-                            timeHours = (2 / 239.98) * (1 / 3600)
-                            ballVelocity = distanceMiles / timeHours
-                            ballVelocity = round(ballVelocity, 2)
-                            if ballVelocity > 30:
-                                ballVelocity = "nan"
-                            app.answerVelocitySS.config(text=ballVelocity)
+                        if (step == 2) & (fileNum != str(fileCount-1)): #Second to last step
+                            if fileNum == str(int(velocityFrameNum) - 3):  #Velocity for the last step
+                                footL = pythag(footLfrontX, footLrearX, footLfrontY, footLrearY)
+                                wristDistance = pythag(velocityFrame["people"][personNum]["pose_keypoints_2d"][12],
+                                                       jsonData["people"][personNum]["pose_keypoints_2d"][12], \
+                                                       velocityFrame["people"][personNum]["pose_keypoints_2d"][13],
+                                                       jsonData["people"][personNum]["pose_keypoints_2d"][13])
 
-                    lastfootLangle = footLangle
-                    lastfootRangle = footRangle
+                                distanceInches = shoeLength * .85 * wristDistance / footL
+                                distanceMiles = distanceInches / 63360
+                                timeHours = (2 / 239.98) * (1 / 3600)
+                                ballVelocity = distanceMiles / timeHours
+                                ballVelocity = round(ballVelocity, 2)
+                                if ballVelocity > 30:
+                                    ballVelocity = "nan"
+                                app.answerVelocityLS.config(text=ballVelocity)
+                            if jsonData["people"][personNum]["pose_keypoints_2d"][30] > jsonData["people"][personNum]["pose_keypoints_2d"][39]:
+                                if (footRangle > 20) & (int(fileNum) < (laststepFileNum-20)):
+                                    # if footRfrontY < footRrearY:
+                                    #     footRangle = footRangle * -1
+                                    rearFootAngle = footLangle - footRangle
+                                    rearFootAngle = round(rearFootAngle, 2)
+                                    rearFootAngle = abs(rearFootAngle)
+                                    app.answerRearAngle.config(text=rearFootAngle)
+                                    feetDistance = pythag(footLrearX, footRrearX, footLrearY, footRrearY)
 
-                lastFrame = jsonData
-                lastFramePerson = personNum
+                                    distanceInches = shoeLength * .85 * feetDistance / footL
+                                    feetDistance = distanceInches / 12  #Converts to feet
 
-                # lastfootRrearX = footRrearX
-                # lastfootRrearY = footRrearY
-                # lastfootRfrontX = footRfrontX
-                # lastfootRfrontY = footRfrontY
-                #
-                # lastfootLrearX = footLrearX
-                # lastfootLrearY = footLrearY
-                # lastfootLfrontX = footLfrontX
-                # lastfootLfrontY = footLfrontY
+                                    feetDistance = round(feetDistance, 2)
+                                    app.answerDistance.config(text=feetDistance)
+                                    analyzeFrame(lastFrame,3,lastFramePerson)
+                                    step = step + 1
+                                    velocityFrame = jsonData
+                                    velocityFrameNum = fileNum
+                                    print(jsonName)
+                        if (step == 3) & (fileNum != str(fileCount - 1)):
+                            if fileNum == str(int(velocityFrameNum) - 3):  #Velocity for the second to last step
+                                footR = pythag(footRfrontX, footRrearX, footRfrontY, footRrearY)
+                                wristDistance = pythag(velocityFrame["people"][personNum]["pose_keypoints_2d"][12],
+                                                       jsonData["people"][personNum]["pose_keypoints_2d"][12], \
+                                                       velocityFrame["people"][personNum]["pose_keypoints_2d"][13],
+                                                       jsonData["people"][personNum]["pose_keypoints_2d"][13])
 
+                                distanceInches = shoeLength * .85 * wristDistance / footR
+                                distanceMiles = distanceInches / 63360
+                                timeHours = (2 / 239.98) * (1 / 3600)
+                                ballVelocity = distanceMiles / timeHours
+                                ballVelocity = round(ballVelocity, 2)
+                                if ballVelocity > 30:
+                                    ballVelocity = "nan"
+                                app.answerVelocitySS.config(text=ballVelocity)
+
+                        lastfootLangle = footLangle
+                        lastfootRangle = footRangle
+
+                    lastFrame = jsonData
+                    lastFramePerson = personNum
+
+                    # lastfootRrearX = footRrearX
+                    # lastfootRrearY = footRrearY
+                    # lastfootRfrontX = footRfrontX
+                    # lastfootRfrontY = footRfrontY
+                    #
+                    # lastfootLrearX = footLrearX
+                    # lastfootLrearY = footLrearY
+                    # lastfootLfrontX = footLfrontX
+                    # lastfootLfrontY = footLfrontY
+
+            except:
+                badFrames = badFrames + 1
         data = {}
 
         data['Info'] = []
@@ -981,7 +1013,8 @@ def playVideo():  # Creates the threads where the videos are played
         with open(directory + '.txt', 'w') as outfile:
                 json.dump(data,outfile)
 
-        # os.remove(directory + "_Processed" + ".mp4")
+        if app.brightCont.get() == "Yes":
+            os.remove(directory + "_Processed" + ".mp4")
         app.startButton.config(text="Pause")
     elif app.startButton.cget("text") == "Pause":
         app.startButton.config(text="Continue")
