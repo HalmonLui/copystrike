@@ -868,6 +868,7 @@ def playVideo():  # Creates the threads where the videos are played
                     elif fileNum == str(fileCount-3): #Finds ball velocity using first and second frame
 
                         footL = pythag(footLfrontX, footLrearX, footLfrontY, footLrearY)
+                        print(footL)
                         wristDistance = pythag(velocityFrame["people"][personNum]["pose_keypoints_2d"][12], jsonData["people"][personNum]["pose_keypoints_2d"][12], \
                                                velocityFrame["people"][personNum]["pose_keypoints_2d"][13], jsonData["people"][personNum]["pose_keypoints_2d"][13])
 
@@ -911,8 +912,8 @@ def playVideo():  # Creates the threads where the videos are played
                                 timeHours = (2 / 239.98) * (1 / 3600)
                                 ballVelocity = distanceMiles / timeHours
                                 ballVelocity = round(ballVelocity, 2)
-                                if ballVelocity > 30:
-                                    ballVelocity = "nan"
+                                # if ballVelocity > 30:
+                                #     ballVelocity = "nan"
                                 app.answerVelocityLS.config(text=ballVelocity)
                             if jsonData["people"][personNum]["pose_keypoints_2d"][30] > jsonData["people"][personNum]["pose_keypoints_2d"][39]:
                                 if (footRangle > 20) & (int(fileNum) < (laststepFileNum-20)):
@@ -947,8 +948,8 @@ def playVideo():  # Creates the threads where the videos are played
                                 timeHours = (2 / 239.98) * (1 / 3600)
                                 ballVelocity = distanceMiles / timeHours
                                 ballVelocity = round(ballVelocity, 2)
-                                if ballVelocity > 30:
-                                    ballVelocity = "nan"
+                                # if ballVelocity > 30:
+                                #     ballVelocity = "nan"
                                 app.answerVelocitySS.config(text=ballVelocity)
 
                         lastfootLangle = footLangle
