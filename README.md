@@ -6,9 +6,9 @@ A senior design project
 
 ## Abstract
 
-A team of bowling and coding enthusiasts, we came up with a solution to get the best of both worlds.
-An application to record a bowl and compare to bowls where the user has gotten a strike before.
-It will then tell the user what angles and positions of their form to change in order to have performed a strike again.
+With a team of three bowling and coding enthusiasts, we came up with a solution to get the best of both worlds.
+We created an application to record a bowl and compare to bowls where the user has gotten a strike before.
+The program will then tell the user what angles and positions of their form to change in order to perform a strike again.
 
 ## System
 
